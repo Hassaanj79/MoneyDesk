@@ -51,24 +51,7 @@ import { cn } from "@/lib/utils";
 import { RecapStory } from "@/components/dashboard/recap-story";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useIsMobile } from "@/hooks/use-mobile";
-
-const notifications = [
-  {
-    icon: CreditCard,
-    title: "Upcoming Bill: Netflix",
-    description: "Due on 25th Sept, 2024",
-  },
-  {
-    icon: Clock,
-    title: "Recurring Expense: Gym",
-    description: "Scheduled for 28th Sept, 2024",
-  },
-  {
-    icon: CreditCard,
-    title: "Upcoming Bill: Spotify",
-    description: "Due on 30th Sept, 2024",
-  },
-];
+import { useNotifications } from "@/hooks/use-notifications";
 
 const AppLayout = ({ children }: { children: ReactNode }) => {
   const pathname = usePathname();
@@ -79,6 +62,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
   const [recapOpen, setRecapOpen] = React.useState(false);
   const isMobile = useIsMobile();
+  const { notifications, markAllAsRead } = useNotifications();
   
   const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -228,8 +212,14 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
             <Tooltip>
                 <TooltipTrigger asChild>
                     <PopoverTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full">
+                        <Button variant="ghost" size="icon" className="relative rounded-full">
                             <Bell className="h-5 w-5" />
+                            {notifications.some(n => !n.read) && (
+                              <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                              </span>
+                            )}
                             <span className="sr-only">Toggle notifications</span>
                         </Button>
                     </PopoverTrigger>
@@ -241,14 +231,14 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           <PopoverContent align="end" className="w-[380px]">
           <div className="p-4">
               <h3 className="text-lg font-medium">Notifications</h3>
-              <p className="text-sm text-muted-foreground">You have {notifications.length} new messages.</p>
+              <p className="text-sm text-muted-foreground">You have {notifications.filter(n => !n.read).length} unread messages.</p>
           </div>
           <Separator />
           <div className="p-2 space-y-2">
-              {notifications.map((notification, index) => {
+              {notifications.length > 0 ? notifications.map((notification, index) => {
                   const Icon = notification.icon;
                   return (
-                      <div key={index} className="flex items-start p-2 rounded-lg hover:bg-muted">
+                      <div key={index} className={cn("flex items-start p-2 rounded-lg hover:bg-muted", !notification.read && "bg-primary/10")}>
                           <div className="p-2 bg-muted rounded-full">
                               <Icon className="h-5 w-5 text-muted-foreground" />
                           </div>
@@ -258,11 +248,15 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
                           </div>
                       </div>
                   )
-              })}
+              }) : (
+                <div className="text-center text-sm text-muted-foreground p-4">
+                  No new notifications
+                </div>
+              )}
           </div>
           <Separator />
           <div className="p-2">
-              <Button size="sm" className="w-full">Mark all as read</Button>
+              <Button size="sm" className="w-full" onClick={markAllAsRead} disabled={!notifications.some(n => !n.read)}>Mark all as read</Button>
           </div>
           </PopoverContent>
         </Popover>

@@ -27,7 +27,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowUp, ArrowDown, Scale, ChevronDown } from "lucide-react";
+import { Download, ArrowUp, ArrowDown, Scale, ChevronDown, FileText } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -40,10 +40,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const generatedReports = [
   { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
-  { id: "2", name: "September 2024 Spending", date: "2024-10-02", type: "CSV" },
+  { id: "2", name: "September 2024 Spending", date: "2024-10-2", type: "CSV" },
   { id: "3", name: "Q3 2024 Income Statement", date: "2024-10-01", type: "PDF" },
   { id: "4", name: "August 2024 Transactions", date: "2024-09-05", type: "CSV" },
   { id: "5", name: "Q2 2024 Summary", date: "2024-07-03", type: "PDF" },
@@ -59,6 +60,7 @@ const chartConfig = {
 export default function ReportsPage() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
+  const { addNotification } = useNotifications();
 
   const { from, to } = date || {};
   const fromDate = from ? format(from, "LLL dd, y") : null;
@@ -107,6 +109,7 @@ export default function ReportsPage() {
     const doc = new jsPDF();
     const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
 
     doc.setFontSize(20);
     doc.text("Income Statement", 14, 22);
@@ -152,12 +155,18 @@ export default function ReportsPage() {
     });
 
 
-    doc.save(`income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(reportName);
+    addNotification({
+      icon: FileText,
+      title: "Report Generated",
+      description: `Successfully downloaded ${reportName}`,
+    })
   };
 
   const generateCSV = () => {
     const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
 
     const headers = ['Date', 'Description', 'Category', 'Amount'];
     
@@ -192,10 +201,16 @@ export default function ReportsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", reportName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    addNotification({
+      icon: FileText,
+      title: "Report Generated",
+      description: `Successfully downloaded ${reportName}`,
+    })
   }
 
   return (

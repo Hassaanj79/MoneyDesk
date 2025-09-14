@@ -16,12 +16,13 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, Check, ChevronsUpDown } from "lucide-react"
+import { Camera, Check, ChevronsUpDown, User } from "lucide-react"
 import { currencies, countries } from "@/lib/constants"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
 import { useRef, useState } from "react"
+import { useNotifications } from "@/hooks/use-notifications"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -37,6 +38,7 @@ const profileFormSchema = z.object({
 
 export function ProfileForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>("https://picsum.photos/100");
+  const { addNotification } = useNotifications();
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -54,7 +56,12 @@ export function ProfileForm() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function onSubmit(values: z.infer<typeof profileFormSchema>) {
-    console.log(values)
+    console.log(values);
+    addNotification({
+      icon: User,
+      title: 'Profile Updated',
+      description: 'Your profile has been updated successfully.',
+    });
   }
   
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {

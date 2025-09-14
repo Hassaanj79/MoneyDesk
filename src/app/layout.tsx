@@ -6,6 +6,7 @@ import AppLayout from '@/components/app-layout';
 import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
+import { NotificationProvider } from '@/contexts/notification-context';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -33,7 +34,9 @@ export default function RootLayout({
         >
           <DateRangeProvider>
             <TransactionProvider>
-              <AppLayout>{children}</AppLayout>
+              <NotificationProvider>
+                <AppLayout>{children}</AppLayout>
+              </NotificationProvider>
             </TransactionProvider>
           </DateRangeProvider>
           <Toaster />

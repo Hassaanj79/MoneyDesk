@@ -29,10 +29,11 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
 import type { Account, Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const accounts: Account[] = [
   { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
@@ -71,6 +72,7 @@ type AddTransactionFormProps = {
 
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
   const { addTransaction } = useTransactions();
+  const { addNotification } = useNotifications();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -92,6 +94,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       id: Date.now().toString(),
       date: format(values.date, "yyyy-MM-dd"),
     });
+
+    addNotification({
+      icon: values.type === 'income' ? ArrowUp : ArrowDown,
+      title: `Transaction Added`,
+      description: `${values.name} for $${values.amount.toFixed(2)} has been saved.`,
+    });
+
     onSuccess?.();
   }
 
