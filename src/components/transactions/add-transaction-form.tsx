@@ -29,7 +29,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X } from "lucide-react";
 import { format } from "date-fns";
 import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -40,6 +40,7 @@ import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
+import Image from "next/image";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -94,6 +95,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   
 
   const isRecurring = form.watch("isRecurring");
+  const receiptPreview = form.watch("receipt");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     const { receipt, ...transactionData } = values;
@@ -337,6 +339,26 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                             </Dialog>
                         </div>
                     </FormControl>
+                     {receiptPreview && (
+                        <div className="mt-4 relative w-48 h-48">
+                            <Image
+                                src={receiptPreview}
+                                alt="Receipt preview"
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md border"
+                            />
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                onClick={() => form.setValue("receipt", null)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
                     <FormMessage />
                 </FormItem>
                 )}
