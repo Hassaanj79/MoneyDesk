@@ -64,29 +64,31 @@ export function ProfileForm() {
     if (user) {
         setLoading(true);
         getUserProfile(user.uid).then(profile => {
+            const defaultValues = {
+                name: user.displayName || '',
+                email: user.email || '',
+                phone: '',
+                street: '',
+                state: '',
+                zipcode: '',
+                country: '',
+                currency: currency,
+            };
+
             if (profile) {
                 form.reset({
-                    name: profile.name || user.displayName || '',
-                    email: profile.email || user.email || '',
-                    phone: profile.phone || '',
-                    street: profile.street || '',
-                    state: profile.state || '',
-                    zipcode: profile.zipcode || '',
-                    country: profile.country || '',
-                    currency: profile.currency || currency,
+                    name: profile.name || defaultValues.name,
+                    email: profile.email || defaultValues.email,
+                    phone: profile.phone || defaultValues.phone,
+                    street: profile.street || defaultValues.street,
+                    state: profile.state || defaultValues.state,
+                    zipcode: profile.zipcode || defaultValues.zipcode,
+                    country: profile.country || defaultValues.country,
+                    currency: profile.currency || defaultValues.currency,
                 });
                 setPhotoPreview(profile.photoURL || user.photoURL || null);
             } else {
-                 form.reset({
-                    name: user.displayName || '',
-                    email: user.email || '',
-                    phone: '',
-                    street: '',
-                    state: '',
-                    zipcode: '',
-                    country: '',
-                    currency: currency,
-                });
+                 form.reset(defaultValues);
                 setPhotoPreview(user.photoURL || null);
             }
         }).finally(() => setLoading(false));
@@ -99,8 +101,6 @@ export function ProfileForm() {
     if (!user) return;
     setLoading(true);
 
-    // Note: In a real app, you would upload the photo to a storage service
-    // and get a URL back. For now, we'll just use the existing photoURL.
     const { photo, ...profileData } = values;
     
     try {
@@ -403,7 +403,4 @@ export function ProfileForm() {
     </Form>
   )
 }
-
-    
-
     
