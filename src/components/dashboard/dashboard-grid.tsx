@@ -82,6 +82,17 @@ export default function DashboardGrid() {
 
   const initialItems = [
     {
+      id: "balance1",
+      component: (
+        <BalanceCard
+          title="Total Balance"
+          amount={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+          icon={Wallet}
+        />
+      ),
+      colSpan: "sm:col-span-1",
+    },
+    {
       id: "balance",
       component: (
         <BalanceCard
