@@ -6,6 +6,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
+import { AuthProvider } from '@/contexts/auth-context';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -31,15 +32,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <DateRangeProvider>
-            <TransactionProvider>
-                <CurrencyProvider>
-                    <NotificationProvider>
-                        {children}
-                    </NotificationProvider>
-                </CurrencyProvider>
-            </TransactionProvider>
-          </DateRangeProvider>
+          <AuthProvider>
+            <DateRangeProvider>
+              <TransactionProvider>
+                  <CurrencyProvider>
+                      <NotificationProvider>
+                          {children}
+                      </NotificationProvider>
+                  </CurrencyProvider>
+              </TransactionProvider>
+            </DateRangeProvider>
+          </AuthProvider>
           <Toaster />
         </ThemeProvider>
       </body>

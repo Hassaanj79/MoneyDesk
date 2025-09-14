@@ -16,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { useState } from "react";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -25,6 +29,10 @@ const formSchema = z.object({
 
 export function SignupForm() {
     const router = useRouter();
+    const { signup } = useAuth();
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -34,10 +42,21 @@ export function SignupForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would typically handle user registration
-    router.push("/");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
+    setError(null);
+    try {
+        await signup(values.email, values.password, values.name);
+        router.push("/");
+    } catch(err: any) {
+        if (err.code === 'auth/email-already-in-use') {
+            setError("This email is already in use. Please try another one.");
+        } else {
+            setError("An unexpected error occurred. Please try again.");
+        }
+    } finally {
+        setLoading(false);
+    }
   }
 
   return (
@@ -49,6 +68,11 @@ export function SignupForm() {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
                  <FormField
                 control={form.control}
                 name="name"
@@ -88,8 +112,9 @@ export function SignupForm() {
                     </FormItem>
                 )}
                 />
-                <Button type="submit" className="w-full">
-                Create Account
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Create Account
                 </Button>
             </form>
             </Form>

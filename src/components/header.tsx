@@ -23,8 +23,8 @@ import {
   X,
   Loader2,
   History,
-  Eye,
   Menu,
+  LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -40,6 +40,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/contexts/auth-context";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -60,6 +61,8 @@ export function Header() {
   const isMobile = useIsMobile();
   const { notifications } = useNotifications();
   const [isClient, setIsClient] = React.useState(false);
+  const { user, logout } = useAuth();
+
 
   React.useEffect(() => {
     setIsClient(true);
@@ -77,7 +80,7 @@ export function Header() {
       setIsSearching(true);
       setSearchPopoverOpen(true);
       try {
-        const transactionsToSearch = allTransactions.map(({ categoryIcon, ...rest }) => rest);
+        const transactionsToSearch = allTransactions.map(({ ...rest }) => rest);
         
         const response = await searchTransactions({
           query: searchQuery,
@@ -106,7 +109,7 @@ export function Header() {
   };
   
   const HeaderContent = (
-     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-40">
+     <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
             href="/"
@@ -272,17 +275,17 @@ export function Header() {
                 <PopoverTrigger asChild>
                      <Button variant="ghost" size="icon" className="rounded-full">
                         <Avatar className="h-9 w-9 cursor-pointer">
-                            <AvatarImage src="https://picsum.photos/100" alt="Avatar" data-ai-hint="person face" />
-                            <AvatarFallback>S</AvatarFallback>
+                            <AvatarImage src={user?.photoURL || "https://picsum.photos/100"} alt="Avatar" data-ai-hint="person face" />
+                            <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
                         </Avatar>
                      </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-56" align="end">
                     <div className="p-2">
                         <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">Smith</p>
+                            <p className="text-sm font-medium leading-none">{user?.displayName}</p>
                             <p className="text-xs leading-none text-muted-foreground">
-                                smith@example.com
+                                {user?.email}
                             </p>
                         </div>
                     </div>
@@ -294,6 +297,10 @@ export function Header() {
                                 Settings
                             </Button>
                         </Link>
+                        <Button variant="ghost" className="w-full justify-start" onClick={logout}>
+                            <LogOut className="mr-2 h-4 w-4"/>
+                            Logout
+                        </Button>
                     </div>
                 </PopoverContent>
             </Popover>
@@ -306,9 +313,11 @@ export function Header() {
     return <>{HeaderContent}</>;
   }
   
+  const content = <>{HeaderContent}</>
+
   if (isMobile) {
-    return <>{HeaderContent}</>;
+    return content;
   }
 
-  return <TooltipProvider>{HeaderContent}</TooltipProvider>;
+  return <TooltipProvider>{content}</TooltipProvider>;
 }

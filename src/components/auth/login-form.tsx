@@ -16,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/contexts/auth-context";
+import { useState } from "react";
+import { Alert, AlertDescription } from "../ui/alert";
+import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
@@ -23,7 +27,11 @@ const formSchema = z.object({
 });
 
 export function LoginForm() {
-    const router = useRouter();
+  const router = useRouter();
+  const { login } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -32,10 +40,17 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    // Here you would typically handle authentication
-    router.push("/");
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    setLoading(true);
+    setError(null);
+    try {
+      await login(values.email, values.password);
+      router.push("/");
+    } catch (err) {
+      setError("Invalid email or password. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -47,6 +62,11 @@ export function LoginForm() {
         <CardContent>
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                {error && (
+                    <Alert variant="destructive">
+                        <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
                 <FormField
                 control={form.control}
                 name="email"
@@ -73,8 +93,9 @@ export function LoginForm() {
                     </FormItem>
                 )}
                 />
-                <Button type="submit" className="w-full">
-                Login
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Login
                 </Button>
             </form>
             </Form>
