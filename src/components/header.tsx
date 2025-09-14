@@ -47,7 +47,6 @@ const navItems = [
     { href: "/accounts", label: "Accounts", icon: Wallet },
     { href: "/budgets", label: "Budgets", icon: Target },
     { href: "/reports", label: "Reports", icon: BarChart3 },
-    { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
 export function Header() {
@@ -107,7 +106,7 @@ export function Header() {
   };
   
   const HeaderContent = (
-     <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6 z-40">
+     <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
         <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
           <Link
             href="/"
@@ -247,67 +246,27 @@ export function Header() {
               </Tooltip>
             </TooltipProvider>
             
-            <Popover>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                        <PopoverTrigger asChild>
-                            <Button variant="ghost" size="icon" className="relative rounded-full">
-                                <Bell className="h-5 w-5" />
-                                {notifications.some(n => !n.read) && (
-                                    <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                                    </span>
-                                )}
-                                <span className="sr-only">Toggle notifications</span>
-                            </Button>
-                        </PopoverTrigger>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                        <p>Notifications</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
-            <PopoverContent align="end" className="w-[380px]">
-                <div className="p-4">
-                    <h3 className="text-lg font-medium">Notifications</h3>
-                    <p className="text-sm text-muted-foreground">You have {notifications.filter(n => !n.read).length} unread messages.</p>
-                </div>
-                <Separator />
-                <div className="p-2 space-y-2 max-h-80 overflow-y-auto">
-                    {notifications.length > 0 ? notifications.slice(0, 5).map((notification) => {
-                        const Icon = notification.icon;
-                        return (
-                            <Link href="/notifications" key={notification.id} className="block">
-                            <div className={cn("flex items-start p-2 rounded-lg hover:bg-muted", !notification.read && "bg-primary/10")}>
-                                <div className="p-2 bg-muted rounded-full">
-                                    <Icon className="h-5 w-5 text-muted-foreground" />
-                                </div>
-                                <div className="ml-4 flex-1">
-                                    <p className="text-sm font-medium">{notification.title}</p>
-                                    <p className="text-xs text-muted-foreground">{notification.description}</p>
-                                </div>
-                            </div>
-                            </Link>
-                        )
-                    }) : (
-                    <div className="text-center text-sm text-muted-foreground p-4">
-                        No new notifications
-                    </div>
-                    )}
-                </div>
-                <Separator />
-                <div className="p-2 flex justify-between items-center">
-                    <Button size="sm" variant="outline" onClick={markAllAsRead} disabled={!notifications.some(n => !n.read)}>Mark all as read</Button>
-                    <Button size="sm" asChild>
-                    <Link href="/notifications">
-                        View All <Eye className="ml-2 h-4 w-4"/>
-                    </Link>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link href="/notifications">
+                    <Button variant="ghost" size="icon" className="relative rounded-full">
+                      <Bell className="h-5 w-5" />
+                      {notifications.some(n => !n.read) && (
+                        <span className="absolute top-1 right-1 flex h-2.5 w-2.5">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                        </span>
+                      )}
+                      <span className="sr-only">Notifications</span>
                     </Button>
-                </div>
-            </PopoverContent>
-            </Popover>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Notifications</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
 
             <Popover>
                 <PopoverTrigger asChild>
