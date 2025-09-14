@@ -3,7 +3,7 @@ export type Transaction = {
   id: string;
   userId: string;
   name: string;
-  category: string;
+  categoryId: string;
   date: string;
   amount: number;
   type: 'income' | 'expense';
