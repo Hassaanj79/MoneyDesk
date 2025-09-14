@@ -17,9 +17,10 @@ export function CameraCapture({ onPhotoTaken }: CameraCaptureProps) {
   const { toast } = useToast();
 
   useEffect(() => {
+    let stream: MediaStream | null = null;
     const getCameraPermission = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        stream = await navigator.mediaDevices.getUserMedia({ video: true });
         setHasCameraPermission(true);
 
         if (videoRef.current) {
@@ -39,8 +40,7 @@ export function CameraCapture({ onPhotoTaken }: CameraCaptureProps) {
     getCameraPermission();
 
     return () => {
-        if (videoRef.current && videoRef.current.srcObject) {
-            const stream = videoRef.current.srcObject as MediaStream;
+        if (stream) {
             stream.getTracks().forEach(track => track.stop());
         }
     }
@@ -58,6 +58,12 @@ export function CameraCapture({ onPhotoTaken }: CameraCaptureProps) {
         context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
         const dataUrl = canvas.toDataURL("image/jpeg");
         onPhotoTaken(dataUrl);
+
+        // Stop the camera stream
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+        }
       }
     }
   };
