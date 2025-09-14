@@ -176,7 +176,7 @@ export function Header() {
                 <Input
                     type="search"
                     placeholder="Search transactions..."
-                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[320px]"
+                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onFocus={() => {
