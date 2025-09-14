@@ -106,7 +106,7 @@ export function ProfileForm() {
     try {
         await updateUserProfile(user.uid, {
             ...profileData,
-            photoURL: photoPreview || undefined
+            photoURL: photoPreview || null
         });
 
         if (values.currency) {
@@ -134,8 +134,12 @@ export function ProfileForm() {
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-        setPhotoPreview(URL.createObjectURL(file));
-        form.setValue("photo", file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setPhotoPreview(reader.result as string);
+            form.setValue("photo", reader.result as string);
+        };
+        reader.readAsDataURL(file);
     }
   }
 
@@ -196,7 +200,7 @@ export function ProfileForm() {
             <FormItem>
               <FormLabel>Name</FormLabel>
               <FormControl>
-                <Input placeholder="Your name" {...field} />
+                <Input placeholder="Your name" {...field} value={field.value || ''} />
               </FormControl>
               <FormDescription>
                 This is the name that will be displayed on your profile.
@@ -212,7 +216,7 @@ export function ProfileForm() {
             <FormItem>
               <FormLabel>Email</FormLabel>
               <FormControl>
-                <Input type="email" placeholder="Your email" {...field} />
+                <Input type="email" placeholder="Your email" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -225,7 +229,7 @@ export function ProfileForm() {
             <FormItem>
               <FormLabel>Phone Number</FormLabel>
               <FormControl>
-                <Input placeholder="Your phone number" {...field} />
+                <Input placeholder="Your phone number" {...field} value={field.value || ''} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -238,7 +242,7 @@ export function ProfileForm() {
                 <FormItem>
                 <FormLabel>Street Address</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g. 123 Main St" {...field} />
+                    <Input placeholder="e.g. 123 Main St" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -252,7 +256,7 @@ export function ProfileForm() {
                 <FormItem>
                 <FormLabel>City / State</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g. San Francisco" {...field} />
+                    <Input placeholder="e.g. San Francisco" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -265,7 +269,7 @@ export function ProfileForm() {
                 <FormItem>
                 <FormLabel>Zip/Postal Code</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g. 90210" {...field} />
+                    <Input placeholder="e.g. 90210" {...field} value={field.value || ''} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
