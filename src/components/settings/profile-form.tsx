@@ -80,6 +80,11 @@ export function ProfileForm() {
                  form.reset({
                     name: user.displayName || '',
                     email: user.email || '',
+                    phone: '',
+                    street: '',
+                    state: '',
+                    zipcode: '',
+                    country: '',
                     currency: currency,
                 });
                 setPhotoPreview(user.photoURL || null);
@@ -398,5 +403,7 @@ export function ProfileForm() {
     </Form>
   )
 }
+
+    
 
     
