@@ -1,9 +1,8 @@
 
-
 "use client";
 
-import { redirect } from 'next/navigation';
+import DashboardGrid from "@/components/dashboard/dashboard-grid";
 
-export default function RootPage() {
-  redirect('/transactions');
+export default function DashboardPage() {
+  return <DashboardGrid />;
 }
