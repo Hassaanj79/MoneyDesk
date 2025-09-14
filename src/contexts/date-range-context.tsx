@@ -3,7 +3,7 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { DateRange } from 'react-day-picker';
-import { subDays, startOfMonth, endOfMonth, startOfYear, endOfYear } from 'date-fns';
+import { subWeeks, startOfWeek, endOfWeek } from 'date-fns';
 
 interface DateRangeContextType {
   date: DateRange | undefined;
@@ -17,9 +17,9 @@ export const DateRangeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const today = new Date();
-    // Default to this year
-    const fromDate = startOfYear(today);
-    const toDate = endOfYear(today);
+    // Default to last week
+    const fromDate = startOfWeek(subWeeks(today, 1));
+    const toDate = endOfWeek(subWeeks(today, 1));
     
     setDate({
       from: fromDate,
