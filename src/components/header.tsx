@@ -1,3 +1,4 @@
+
 "use client";
 
 import React from "react";
@@ -16,12 +17,13 @@ import {
   Loader2,
   History,
   Menu,
+  LogOut,
+  User as UserIcon,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { useDateRange } from "@/contexts/date-range-context";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { searchTransactions } from "@/ai/flows/search";
 import type { Transaction } from "@/types";
 import { cn } from "@/lib/utils";
@@ -33,6 +35,9 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTransactions } from "@/contexts/transaction-context";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
+import { useAuth } from "@/contexts/auth-context";
+import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -54,6 +59,7 @@ export function Header() {
   const { notifications } = useNotifications();
   const [isClient, setIsClient] = React.useState(false);
   const { transactions } = useTransactions();
+  const { user, logout } = useAuth();
 
 
   React.useEffect(() => {
@@ -261,15 +267,29 @@ export function Header() {
               </Tooltip>
             </TooltipProvider>
 
-            <Popover>
-                <PopoverTrigger asChild>
-                     <Button variant="ghost" size="icon" className="rounded-full">
-                        <Link href="/settings">
-                            <Settings className="h-5 w-5" />
-                        </Link>
-                     </Button>
-                </PopoverTrigger>
-            </Popover>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user?.photoURL || undefined} alt={user?.displayName || "User"} data-ai-hint="person face" />
+                    <AvatarFallback>{user?.displayName?.charAt(0) || <UserIcon />}</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <Link href="/settings">
+                  <DropdownMenuItem className="cursor-pointer">
+                      <Settings className="mr-2" /> Settings
+                  </DropdownMenuItem>
+                </Link>
+                <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
+                  <LogOut className="mr-2" /> Logout
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
         </div>
         <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
     </header>
