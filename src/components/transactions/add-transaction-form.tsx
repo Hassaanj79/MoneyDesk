@@ -51,6 +51,7 @@ const formSchema = z.object({
   categoryId: z.string().min(1, "Please select a category."),
   isRecurring: z.boolean().default(false),
   recurrenceFrequency: z.string().optional(),
+  recurrenceDueDate: z.coerce.number().optional(),
   receipt: z.any().optional(),
 });
 
@@ -159,36 +160,34 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             render={({ field }) => (
                 <FormItem className="flex flex-col">
                 <FormLabel>Date</FormLabel>
-                <div>
-                  <Popover>
-                      <PopoverTrigger asChild>
-                      <FormControl>
-                          <Button
-                          variant={"outline"}
-                          className={cn(
-                              "w-full pl-3 text-left font-normal",
-                              !field.value && "text-muted-foreground"
-                          )}
-                          >
-                          {field.value ? (
-                              format(field.value, "PPP")
-                          ) : (
-                              <span>Pick a date</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                      </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                          mode="single"
-                          selected={field.value}
-                          onSelect={field.onChange}
-                          initialFocus
-                      />
-                      </PopoverContent>
-                  </Popover>
-                </div>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                        )}
+                        >
+                        {field.value ? (
+                            format(field.value, "PPP")
+                        ) : (
+                            <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
                 <FormMessage />
                 </FormItem>
             )}
@@ -200,7 +199,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             render={({ field }) => (
                 <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <div>
                   <Select
                       onValueChange={field.onChange}
                       defaultValue={field.value}
@@ -218,7 +216,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                       ))}
                       </SelectContent>
                   </Select>
-                </div>
                 <FormMessage />
                 </FormItem>
             )}
@@ -250,48 +247,63 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           )}
         />
         
-        <div className="flex items-center space-x-2">
-            <FormField
-            control={form.control}
-            name="isRecurring"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                <div className="space-y-0.5">
-                    <FormLabel>Recurring Transaction</FormLabel>
-                </div>
-                <FormControl>
-                    <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    />
-                </FormControl>
-                </FormItem>
-            )}
-            />
-            {isRecurring && (
+        <FormField
+          control={form.control}
+          name="isRecurring"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Recurring Transaction</FormLabel>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {isRecurring && (
+            <div className="grid grid-cols-2 gap-4 rounded-lg border p-3 shadow-sm">
+                <FormField
+                control={form.control}
+                name="recurrenceFrequency"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Frequency</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Frequency" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                        <SelectItem value="daily">Daily</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    </FormItem>
+                )}
+                />
                  <FormField
-                 control={form.control}
-                 name="recurrenceFrequency"
-                 render={({ field }) => (
-                   <FormItem className="flex-1">
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                       <FormControl>
-                         <SelectTrigger>
-                           <SelectValue placeholder="Frequency" />
-                         </SelectTrigger>
-                       </FormControl>
-                       <SelectContent>
-                         <SelectItem value="daily">Daily</SelectItem>
-                         <SelectItem value="weekly">Weekly</SelectItem>
-                         <SelectItem value="monthly">Monthly</SelectItem>
-                         <SelectItem value="yearly">Yearly</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </FormItem>
-                 )}
-               />
-            )}
-        </div>
+                  control={form.control}
+                  name="recurrenceDueDate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date (Day)</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 15" {...field} min={1} max={31} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            </div>
+        )}
         
         {type === 'expense' && (
             <FormField
@@ -373,3 +385,5 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     </Form>
   );
 }
+
+    
