@@ -21,15 +21,13 @@ export default function AuthLayout({
     }
   }, [user, loading, router]);
 
-  if (loading) {
+  if (loading || user) {
     return (
        <div className="flex items-center justify-center min-h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     )
   }
-  
-  if (user) return null;
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 p-4">
