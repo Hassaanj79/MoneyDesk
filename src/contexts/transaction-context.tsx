@@ -3,9 +3,6 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Transaction } from '@/types';
-import { collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc, query, where, getDocs } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { useAuth } from './auth-context';
 import { transactions as initialTransactions } from '@/lib/data';
 
 interface TransactionContextType {
@@ -19,59 +16,19 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export const TransactionProvider = ({ children }: { children: ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      setLoading(true);
-      const q = collection(db, 'users', user.uid, 'transactions');
-      
-      const unsubscribe = onSnapshot(q, async (querySnapshot) => {
-        // Check if transactions exist, if not, seed them.
-        if (querySnapshot.empty) {
-          console.log("No transactions found, seeding initial data...");
-          for (const t of initialTransactions) {
-            await addDoc(collection(db, 'users', user.uid, 'transactions'), {
-              ...t
-            });
-          }
-        } else {
-            const userTransactions = querySnapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            } as Transaction));
-            setTransactions(userTransactions);
-        }
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
-    } else {
-      setTransactions([]);
-      setLoading(false);
-    }
-  }, [user]);
+  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions.map(t => ({...t, categoryIcon: ''})));
+  const [loading, setLoading] = useState(false);
 
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    if (user) {
-      await addDoc(collection(db, 'users', user.uid, 'transactions'), transaction);
-    }
+    setTransactions(prev => [...prev, { ...transaction, id: new Date().toISOString() }]);
   };
 
   const updateTransaction = async (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => {
-    if (user) {
-      const transactionRef = doc(db, 'users', user.uid, 'transactions', id);
-      await updateDoc(transactionRef, updatedTransaction);
-    }
+    setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedTransaction } as Transaction : t));
   };
   
   const deleteTransaction = async (id: string) => {
-    if (user) {
-        const transactionRef = doc(db, 'users', user.uid, 'transactions', id);
-        await deleteDoc(transactionRef);
-    }
+    setTransactions(prev => prev.filter(t => t.id !== id));
   };
 
   return (

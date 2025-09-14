@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -14,110 +13,209 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/auth-context";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
+import { CalendarIcon } from "lucide-react";
+import { format, parseISO } from "date-fns";
+import type { Account, Category, Transaction } from "@/types";
+import { useTransactions } from "@/contexts/transaction-context";
 import { useState } from "react";
-import { Alert, AlertDescription } from "../ui/alert";
-import { Loader2 } from "lucide-react";
+
 
 const formSchema = z.object({
-  email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
+  type: z.enum(["income", "expense"]),
+  name: z.string().min(2, "Description is too short."),
+  amount: z.coerce.number().positive("Amount must be positive."),
+  date: z.date(),
+  accountId: z.string().min(1, "Please select an account."),
+  category: z.string().min(1, "Please select a category."),
 });
 
-export function LoginForm() {
-  const router = useRouter();
-  const { login } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+type EditTransactionFormProps = {
+  transaction: Transaction;
+  onSuccess?: () => void;
+};
+
+const accountsData: Account[] = [
+    { id: "1", name: 'Chase Checking', type: 'bank', initialBalance: 12500.50, balance: 0 },
+    { id: "2", name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00, balance: 0 },
+    { id: "3", name: 'PayPal', type: 'paypal', initialBalance: 850.25, balance: 0 },
+    { id: "4", name: 'Cash', type: 'cash', initialBalance: 300.00, balance: 0 },
+];
+const categoriesData: Category[] = [
+    { id: "1", name: "Food", type: "expense" },
+    { id: "2", name: "Shopping", type: "expense" },
+    { id: "3", name: "Transport", type: "expense" },
+    { id: "4", name: "Entertainment", type: "expense" },
+    { id: "5", name: "Salary", type: "income" },
+    { id: "6", name: "Freelance", type: "income" },
+    { id: '7', name: 'Groceries', type: 'expense' },
+];
+
+export function EditTransactionForm({ transaction, onSuccess }: EditTransactionFormProps) {
+  const { updateTransaction } = useTransactions();
+  const [accounts] = useState<Account[]>(accountsData);
+  const [categories] = useState<Category[]>(categoriesData);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: "",
-      password: "",
+      ...transaction,
+      date: parseISO(transaction.date),
+      amount: Math.abs(transaction.amount),
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    setLoading(true);
-    setError(null);
-    try {
-      await login(values.email, values.password);
-      router.push("/");
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    await updateTransaction(transaction.id, {
+      ...values,
+      date: format(values.date, "yyyy-MM-dd"),
+    });
+    onSuccess?.();
   }
 
-  return (
-    <Card className="w-full max-w-sm">
-        <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>
-                Enter your credentials to access your account.
-            </CardDescription>
-        </CardHeader>
-        <CardContent>
-            <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                {error && (
-                    <Alert variant="destructive">
-                        <AlertDescription>{error}</AlertDescription>
-                    </Alert>
-                )}
-                <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email</FormLabel>
-                    <FormControl>
-                        <Input type="email" placeholder="john.doe@example.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                    <FormItem>
-                        <div className="flex items-center">
-                            <FormLabel>Password</FormLabel>
-                            <Link
-                                href="/forgot-password"
-                                className="ml-auto inline-block text-xs underline"
-                            >
-                                Forgot your password?
-                            </Link>
-                        </div>
-                    <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Login
-                </Button>
-            </form>
-            </Form>
+  const filteredCategories = categories.filter((c) => c.type === transaction.type);
 
-            <div className="mt-4 text-center text-sm">
-                Don't have an account?{" "}
-                <Link href="/signup" className="underline">
-                    Sign up
-                </Link>
-            </div>
-        </CardContent>
-    </Card>
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Coffee, Salary" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="0.00" {...field} step="0.01" />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                        )}
+                        >
+                        {field.value ? (
+                            format(field.value, "PPP")
+                        ) : (
+                            <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+
+            <FormField
+            control={form.control}
+            name="accountId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Account</FormLabel>
+                <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                >
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an account" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {accounts.map((acc) => (
+                        <SelectItem key={acc.id} value={acc.id}>
+                        {acc.name}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {filteredCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <Button type="submit" className="w-full">
+          Save Changes
+        </Button>
+      </form>
+    </Form>
   );
 }

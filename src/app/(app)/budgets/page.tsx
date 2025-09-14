@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,9 +26,6 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTransactions } from "@/contexts/transaction-context";
-import { useAuth } from "@/contexts/auth-context";
-import { collection, onSnapshot, addDoc, doc, deleteDoc, updateDoc, setDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 
 const initialBudgets: Omit<Budget, 'spent' | 'categoryName' | 'id'>[] = [
@@ -56,54 +53,25 @@ const initialCategories: Category[] = [
 type BudgetWithId = Budget & { id: string };
 
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState<BudgetWithId[]>([]);
+  const [budgets, setBudgets] = useState<Omit<Budget, 'id'>[]>(initialBudgets);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<BudgetWithId | null>(null);
   const { date } = useDateRange();
   const { formatCurrency } = useCurrency();
   const { transactions } = useTransactions();
-  const { user } = useAuth();
   
 
-  useEffect(() => {
-    if (user) {
-        const budgetsUnsub = onSnapshot(collection(db, 'users', user.uid, 'budgets'), async (snapshot) => {
-            if(snapshot.empty) {
-                for (const b of initialBudgets) {
-                    await addDoc(collection(db, 'users', user.uid, 'budgets'), b);
-                }
-            } else {
-                setBudgets(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BudgetWithId)));
-            }
-        });
-        
-        const categoriesUnsub = onSnapshot(collection(db, 'users', user.uid, 'categories'), async (snapshot) => {
-            if (snapshot.empty) {
-                for (const cat of initialCategories) {
-                     await setDoc(doc(db, 'users', user.uid, 'categories', cat.id), cat);
-                }
-            } else {
-                 setCategories(snapshot.docs.map(doc => doc.data() as Category));
-            }
-        });
-
-
-        return () => {
-            budgetsUnsub();
-            categoriesUnsub();
-        }
-    }
-  }, [user]);
-
   const processedBudgets: (BudgetWithId & { spent: number, categoryName: string})[] = useMemo(() => {
-    return budgets.map(budget => {
+    return budgets.map((budget, index) => {
+      const id = (index + 1).toString();
       const category = categories.find(c => c.id === budget.categoryId);
       const spent = transactions
         .filter(t => t.category === category?.name && t.type === 'expense' && date?.from && date?.to && isWithinInterval(parseISO(t.date), {start: date.from, end: date.to}))
         .reduce((sum, t) => sum + t.amount, 0);
       return {
         ...budget,
+        id,
         categoryName: category?.name || 'Unknown',
         spent: spent,
       };
@@ -121,39 +89,30 @@ export default function BudgetsPage() {
     setDialogOpen(true);
   };
 
-  const handleDeleteBudget = async (id: string) => {
-    if (user) {
-        await deleteDoc(doc(db, 'users', user.uid, 'budgets', id));
-    }
+  const handleDeleteBudget = (id: string) => {
+    setBudgets(prev => prev.filter((b, index) => (index + 1).toString() !== id));
   };
 
-  const handleSaveBudget = async (data: { categoryId: string; limit: number }) => {
-    if (user) {
-        if (editingBudget) {
-            await updateDoc(doc(db, 'users', user.uid, 'budgets', editingBudget.id), { limit: data.limit });
-        } else {
-             if (!budgets.some(b => b.categoryId === data.categoryId)) {
-                await addDoc(collection(db, 'users', user.uid, 'budgets'), data);
-            }
+  const handleSaveBudget = (data: { categoryId: string; limit: number }) => {
+    if (editingBudget) {
+        setBudgets(prev => prev.map((b, index) => (index + 1).toString() === editingBudget.id ? { ...b, limit: data.limit } : b));
+    } else {
+         if (!budgets.some(b => b.categoryId === data.categoryId)) {
+            setBudgets(prev => [...prev, data]);
         }
     }
     setDialogOpen(false);
     setEditingBudget(null);
   };
 
-  const handleCategoryCreated = async (name: string) => {
-      const newCategory: Omit<Category, 'id'> = {
+  const handleCategoryCreated = (name: string) => {
+      const newCategory: Category = {
+          id: (categories.length + 1).toString(),
           name,
           type: 'expense'
       };
-      if (user) {
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'categories'), newCategory);
-        return { ...newCategory, id: docRef.id };
-      }
-      // Fallback for when user is not available, though it shouldn't happen
-      const tempCategory = { ...newCategory, id: (categories.length + 1).toString() };
-      setCategories(prev => [...prev, tempCategory]);
-      return tempCategory;
+      setCategories(prev => [...prev, newCategory]);
+      return newCategory;
   }
 
   return (

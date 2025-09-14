@@ -1,16 +1,8 @@
-
 "use client";
 
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import {
   ArrowRightLeft,
   BarChart3,
@@ -24,7 +16,6 @@ import {
   Loader2,
   History,
   Menu,
-  LogOut,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -39,8 +30,9 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useAuth } from "@/contexts/auth-context";
 import { useTransactions } from "@/contexts/transaction-context";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -61,7 +53,6 @@ export function Header() {
   const isMobile = useIsMobile();
   const { notifications } = useNotifications();
   const [isClient, setIsClient] = React.useState(false);
-  const { user, logout } = useAuth();
   const { transactions } = useTransactions();
 
 
@@ -273,35 +264,11 @@ export function Header() {
             <Popover>
                 <PopoverTrigger asChild>
                      <Button variant="ghost" size="icon" className="rounded-full">
-                        <Avatar className="h-9 w-9 cursor-pointer">
-                            <AvatarImage src={user?.photoURL || "https://picsum.photos/100"} alt="Avatar" data-ai-hint="person face" />
-                            <AvatarFallback>{user?.displayName?.[0] || 'U'}</AvatarFallback>
-                        </Avatar>
+                        <Link href="/settings">
+                            <Settings className="h-5 w-5" />
+                        </Link>
                      </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56" align="end">
-                    <div className="p-2">
-                        <div className="flex flex-col space-y-1">
-                            <p className="text-sm font-medium leading-none">{user?.displayName}</p>
-                            <p className="text-xs leading-none text-muted-foreground">
-                                {user?.email}
-                            </p>
-                        </div>
-                    </div>
-                    <Separator />
-                    <div className="p-1">
-                        <Link href="/settings">
-                            <Button variant="ghost" className="w-full justify-start">
-                                <Settings className="mr-2 h-4 w-4"/>
-                                Settings
-                            </Button>
-                        </Link>
-                        <Button variant="ghost" className="w-full justify-start" onClick={logout}>
-                            <LogOut className="mr-2 h-4 w-4"/>
-                            Logout
-                        </Button>
-                    </div>
-                </PopoverContent>
             </Popover>
         </div>
         <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
