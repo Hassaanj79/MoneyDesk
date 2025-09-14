@@ -35,24 +35,10 @@ import type { Account, Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
-
-const accounts: Account[] = [
-  { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
-  { id: "2", name: "Venture Rewards", type: "credit-card", initialBalance: -2500.0, balance: 0 },
-  { id: "3", name: "PayPal", type: "paypal", initialBalance: 850.25, balance: 0 },
-  { id: "4", name: "Cash", type: "cash", initialBalance: 300.0, balance: 0 },
-];
-
-const categories: Category[] = [
-  { id: "1", name: "Food", type: "expense" },
-  { id: "2", name: "Shopping", type: "expense" },
-  { id: "3", name: "Transport", type: "expense" },
-  { id: "4", name: "Entertainment", type: "expense" },
-  { id: "5", name: "Salary", type: "income" },
-  { id: "6", name: "Freelance", type: "income" },
-  { id: '7', name: 'Groceries', type: 'expense' },
-  { id: '8', name: 'Utilities', type: 'expense' },
-];
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -75,11 +61,15 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { addTransaction } = useTransactions();
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
+  const { user } = useAuth();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: type,
-      amount: 0,
+      amount: undefined,
       date: new Date(),
       accountId: "",
       category: "",
@@ -88,12 +78,31 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     },
   });
 
+  useEffect(() => {
+    form.reset({ type });
+  }, [type, form]);
+  
+
+  useEffect(() => {
+    if (user) {
+        const accountsUnsub = onSnapshot(collection(db, 'users', user.uid, 'accounts'), snapshot => {
+            setAccounts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account)))
+        });
+        const categoriesUnsub = onSnapshot(collection(db, 'users', user.uid, 'categories'), snapshot => {
+            setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)))
+        });
+        return () => {
+            accountsUnsub();
+            categoriesUnsub();
+        }
+    }
+  }, [user]);
+
   const isRecurring = form.watch("isRecurring");
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    addTransaction({
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await addTransaction({
       ...values,
-      id: Date.now().toString(),
       date: format(values.date, "yyyy-MM-dd"),
     });
 
@@ -104,6 +113,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     });
 
     onSuccess?.();
+    form.reset();
   }
 
   const filteredCategories = categories.filter((c) => c.type === type);

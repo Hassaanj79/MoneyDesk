@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { AddAccountForm } from "@/components/accounts/add-account-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,12 +42,15 @@ import { PlusCircle, Trash2, Wallet } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useAuth } from "@/contexts/auth-context";
+import { collection, onSnapshot, addDoc, doc, deleteDoc } from 'firebase/firestore';
+import { db } from "@/lib/firebase";
 
-const initialAccounts: Omit<Account, 'balance'>[] = [
-  { id: '1', name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
-  { id: '2', name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00 },
-  { id: '3', name: 'PayPal', type: 'paypal', initialBalance: 850.25 },
-  { id: '4', name: 'Cash', type: 'cash', initialBalance: 300.00 },
+const initialAccounts: Omit<Account, 'id' | 'balance'>[] = [
+  { name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
+  { name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00 },
+  { name: 'PayPal', type: 'paypal', initialBalance: 850.25 },
+  { name: 'Cash', type: 'cash', initialBalance: 300.00 },
 ];
 
 function getAccountTypeLabel(type: Account['type']) {
@@ -65,13 +68,31 @@ function getAccountTypeLabel(type: Account['type']) {
 
 
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Omit<Account, 'balance'>[]>(initialAccounts);
+  const [accounts, setAccounts] = useState<Omit<Account, 'balance'>[]>([]);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const { transactions } = useTransactions();
   const { formatCurrency } = useCurrency();
   const { addNotification } = useNotifications();
+  const { user } = useAuth();
+
+
+  useEffect(() => {
+    if (user) {
+        const q = collection(db, 'users', user.uid, 'accounts');
+        const unsubscribe = onSnapshot(q, async (querySnapshot) => {
+            if(querySnapshot.empty) {
+                for (const acc of initialAccounts) {
+                    await addDoc(collection(db, 'users', user.uid, 'accounts'), acc);
+                }
+            } else {
+                setAccounts(querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Omit<Account, 'balance'>)));
+            }
+        });
+        return () => unsubscribe();
+    }
+  }, [user]);
 
   const processedAccounts: Account[] = useMemo(() => {
     return accounts.map(account => {
@@ -85,15 +106,16 @@ export default function AccountsPage() {
     })
   }, [accounts, transactions]);
 
-  const handleAddAccount = (newAccountData: Omit<Account, 'id' | 'balance'>) => {
-    const newAccount = { ...newAccountData, id: (accounts.length + 1).toString() };
-    setAccounts(prev => [...prev, newAccount]);
-    setAddDialogOpen(false);
-    addNotification({
-        icon: Wallet,
-        title: 'Account Added',
-        description: `The account "${newAccount.name}" has been added successfully.`
-    })
+  const handleAddAccount = async (newAccountData: Omit<Account, 'id' | 'balance'>) => {
+    if (user) {
+      await addDoc(collection(db, 'users', user.uid, 'accounts'), newAccountData);
+      setAddDialogOpen(false);
+      addNotification({
+          icon: Wallet,
+          title: 'Account Added',
+          description: `The account "${newAccountData.name}" has been added successfully.`
+      })
+    }
   }
 
   const handleDeleteClick = (account: Account) => {
@@ -101,9 +123,9 @@ export default function AccountsPage() {
     setDeleteDialogOpen(true);
   };
   
-  const confirmDelete = () => {
-    if (selectedAccount) {
-      setAccounts(prev => prev.filter(acc => acc.id !== selectedAccount.id));
+  const confirmDelete = async () => {
+    if (selectedAccount && user) {
+      await deleteDoc(doc(db, 'users', user.uid, 'accounts', selectedAccount.id));
     }
     setDeleteDialogOpen(false);
     setSelectedAccount(null);
@@ -172,7 +194,7 @@ export default function AccountsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this account and all associated transactions.
+              This action cannot be undone. This will permanently delete this account. Related transactions will NOT be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

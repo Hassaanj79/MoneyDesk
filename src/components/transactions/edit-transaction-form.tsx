@@ -32,24 +32,11 @@ import { CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { Account, Category, Transaction } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/auth-context";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
-const accounts: Account[] = [
-  { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
-  { id: "2", name: "Venture Rewards", type: "credit-card", initialBalance: -2500.0, balance: 0 },
-  { id: "3", name: "PayPal", type: "paypal", initialBalance: 850.25, balance: 0 },
-  { id: "4", name: "Cash", type: "cash", initialBalance: 300.0, balance: 0 },
-];
-
-const categories: Category[] = [
-  { id: "1", name: "Food", type: "expense" },
-  { id: "2", name: "Shopping", type: "expense" },
-  { id: "3", name: "Transport", type: "expense" },
-  { id: "4", name: "Entertainment", type: "expense" },
-  { id: "5", name: "Salary", type: "income" },
-  { id: "6", name: "Freelance", type: "income" },
-  { id: '7', name: 'Groceries', type: 'expense' },
-  { id: '8', name: 'Utilities', type: 'expense' },
-];
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -67,6 +54,10 @@ type EditTransactionFormProps = {
 
 export function EditTransactionForm({ transaction, onSuccess }: EditTransactionFormProps) {
   const { updateTransaction } = useTransactions();
+  const { user } = useAuth();
+  const [accounts, setAccounts] = useState<Account[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,8 +67,23 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    updateTransaction(transaction.id, {
+  useEffect(() => {
+    if (user) {
+        const accountsUnsub = onSnapshot(collection(db, 'users', user.uid, 'accounts'), snapshot => {
+            setAccounts(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Account)))
+        });
+        const categoriesUnsub = onSnapshot(collection(db, 'users', user.uid, 'categories'), snapshot => {
+            setCategories(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category)))
+        });
+        return () => {
+            accountsUnsub();
+            categoriesUnsub();
+        }
+    }
+  }, [user]);
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await updateTransaction(transaction.id, {
       ...values,
       date: format(values.date, "yyyy-MM-dd"),
     });

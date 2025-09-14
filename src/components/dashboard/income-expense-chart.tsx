@@ -6,9 +6,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { useDateRange } from "@/contexts/date-range-context";
-import { transactions as allTransactions } from "@/lib/data";
 import { format, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
+import { useTransactions } from "@/contexts/transaction-context";
 
 const chartConfig = {
   income: {
@@ -31,6 +31,7 @@ const IncomeExpenseChart = () => {
   const { date } = useDateRange();
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
   const { formatCurrency } = useCurrency();
+  const { transactions } = useTransactions();
 
   useEffect(() => {
     if (date?.from && date?.to) {
@@ -45,7 +46,7 @@ const IncomeExpenseChart = () => {
           end: endOfMonth(monthStartDate),
         };
 
-        const monthTransactions = allTransactions.filter(t =>
+        const monthTransactions = transactions.filter(t =>
           isWithinInterval(parseISO(t.date), monthInterval)
         );
 
@@ -66,7 +67,7 @@ const IncomeExpenseChart = () => {
 
       setChartData(data);
     }
-  }, [date]);
+  }, [date, transactions]);
 
   const fromDate = date?.from ? format(date.from, "LLL dd, y") : null;
   const toDate = date?.to ? format(date.to, "LLL dd, y") : null;

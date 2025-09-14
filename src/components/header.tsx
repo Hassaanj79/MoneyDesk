@@ -31,7 +31,6 @@ import { DateRangePicker } from "@/components/date-range-picker";
 import { useDateRange } from "@/contexts/date-range-context";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { transactions as allTransactions } from "@/lib/data";
 import { searchTransactions } from "@/ai/flows/search";
 import type { Transaction } from "@/types";
 import { cn } from "@/lib/utils";
@@ -41,6 +40,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/auth-context";
+import { useTransactions } from "@/contexts/transaction-context";
 
 const navItems = [
     { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -54,7 +54,7 @@ export function Header() {
   const pathname = usePathname();
   const { date, setDate } = useDateRange();
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [searchResults, setSearchResults] = React.useState<Omit<Transaction, 'categoryIcon'>[]>([]);
+  const [searchResults, setSearchResults] = React.useState<Omit<Transaction, 'categoryIcon'>>([]);
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
   const [recapOpen, setRecapOpen] = React.useState(false);
@@ -62,6 +62,7 @@ export function Header() {
   const { notifications } = useNotifications();
   const [isClient, setIsClient] = React.useState(false);
   const { user, logout } = useAuth();
+  const { transactions } = useTransactions();
 
 
   React.useEffect(() => {
@@ -80,11 +81,9 @@ export function Header() {
       setIsSearching(true);
       setSearchPopoverOpen(true);
       try {
-        const transactionsToSearch = allTransactions.map(({ ...rest }) => rest);
-        
         const response = await searchTransactions({
           query: searchQuery,
-          transactions: transactionsToSearch,
+          transactions: transactions,
         });
         setSearchResults(response.results);
       } catch (error) {
@@ -100,7 +99,7 @@ export function Header() {
     }, 300);
 
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery]);
+  }, [searchQuery, transactions]);
 
   const clearSearch = () => {
     setSearchQuery("");
