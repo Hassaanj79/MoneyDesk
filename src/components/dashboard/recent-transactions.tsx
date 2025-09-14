@@ -9,7 +9,7 @@ import { ArrowRight, ArrowUp, Car, Clapperboard, ShoppingBag, UtensilsCrossed, H
 import Link from "next/link";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useDateRange } from "@/contexts/date-range-context";
-import { isWithinInterval, parseISO } from "date-fns";
+import { isWithinInterval, parseISO, format } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCategories } from "@/contexts/category-context";
 
