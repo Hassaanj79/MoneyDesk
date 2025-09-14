@@ -10,6 +10,7 @@ import { AuthProvider } from '@/contexts/auth-context';
 import { AccountProvider } from '@/contexts/account-context';
 import { BudgetProvider } from '@/contexts/budget-context';
 import { CategoryProvider } from '@/contexts/category-context';
+import { RecurringNotifications } from '@/components/recurring-notifications';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -43,6 +44,7 @@ export default function RootLayout({
                     <TransactionProvider>
                        <DateRangeProvider>
                         <BudgetProvider>
+                            <RecurringNotifications />
                             {children}
                             <Toaster />
                         </BudgetProvider>
