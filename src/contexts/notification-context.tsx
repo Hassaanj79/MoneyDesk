@@ -4,6 +4,7 @@
 import React, { createContext, useState, ReactNode, useCallback } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import type { ToastProps } from '@/components/ui/toast';
 
 export interface Notification {
   id: string;
@@ -11,6 +12,7 @@ export interface Notification {
   title: string;
   description: string;
   read: boolean;
+  variant?: ToastProps['variant'];
 }
 
 type NewNotification = Omit<Notification, 'id' | 'read'>;
@@ -37,6 +39,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     toast({
       title: notification.title,
       description: notification.description,
+      variant: notification.variant
     });
   }, [toast]);
 

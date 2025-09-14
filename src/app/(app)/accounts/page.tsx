@@ -42,13 +42,7 @@ import { PlusCircle, Trash2, Wallet } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCurrency } from "@/hooks/use-currency";
 import { useNotifications } from "@/hooks/use-notifications";
-
-const initialAccounts: Omit<Account, 'id' | 'balance'>[] = [
-  { name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
-  { name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00 },
-  { name: 'PayPal', type: 'paypal', initialBalance: 850.25 },
-  { name: 'Cash', type: 'cash', initialBalance: 300.00 },
-];
+import { useAccounts } from "@/contexts/account-context";
 
 function getAccountTypeLabel(type: Account['type']) {
     switch (type) {
@@ -63,9 +57,8 @@ function getAccountTypeLabel(type: Account['type']) {
     }
 }
 
-
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Omit<Account, 'balance' | 'id'>[]>(initialAccounts);
+  const { accounts, deleteAccount } = useAccounts();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
@@ -75,25 +68,23 @@ export default function AccountsPage() {
 
 
   const processedAccounts: Account[] = useMemo(() => {
-    return accounts.map((account, index) => {
-        const id = (index + 1).toString();
-        const balance = transactions.reduce((acc, t) => {
-        if (t.accountId === id) {
+    return accounts.map((account) => {
+      const balance = transactions.reduce((acc, t) => {
+        if (t.accountId === account.id) {
           return acc + (t.type === 'income' ? t.amount : -t.amount);
         }
         return acc;
       }, account.initialBalance);
-      return { ...account, id, balance };
+      return { ...account, balance };
     })
   }, [accounts, transactions]);
 
-  const handleAddAccount = (newAccountData: Omit<Account, 'id' | 'balance'>) => {
-    setAccounts(prev => [...prev, newAccountData]);
+  const handleAddAccountSuccess = (newAccountName: string) => {
     setAddDialogOpen(false);
     addNotification({
         icon: Wallet,
         title: 'Account Added',
-        description: `The account "${newAccountData.name}" has been added successfully.`
+        description: `The account "${newAccountName}" has been added successfully.`
     })
   }
 
@@ -102,9 +93,15 @@ export default function AccountsPage() {
     setDeleteDialogOpen(true);
   };
   
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedAccount) {
-      setAccounts(prev => prev.filter((_, index) => (index + 1).toString() !== selectedAccount.id));
+      await deleteAccount(selectedAccount.id);
+       addNotification({
+        icon: Trash2,
+        title: 'Account Deleted',
+        description: `The account "${selectedAccount.name}" has been deleted.`,
+        variant: 'destructive'
+      });
     }
     setDeleteDialogOpen(false);
     setSelectedAccount(null);
@@ -164,7 +161,7 @@ export default function AccountsPage() {
           <DialogHeader>
             <DialogTitle>Add a New Account</DialogTitle>
           </DialogHeader>
-          <AddAccountForm onAccountAdded={handleAddAccount}/>
+          <AddAccountForm onSuccess={handleAddAccountSuccess}/>
         </DialogContent>
       </Dialog>
       

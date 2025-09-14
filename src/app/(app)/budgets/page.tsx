@@ -26,52 +26,29 @@ import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useBudgets } from "@/contexts/budget-context";
+import { useCategories } from "@/contexts/category-context";
 
-
-const initialBudgets: Omit<Budget, 'spent' | 'categoryName' | 'id'>[] = [
-  { categoryId: "1", limit: 500 },
-  { categoryId: "7", limit: 400 },
-  { categoryId: "2", limit: 800 },
-  { categoryId: "4", limit: 200 },
-];
-
-const initialCategories: Category[] = [
-    { id: "1", name: "Food", type: "expense" },
-    { id: "2", name: "Shopping", type: "expense" },
-    { id: "3", name: "Transport", type: "expense" },
-    { id: "4", name: "Entertainment", type: "expense" },
-    { id: "5", name: "Salary", type: "income" },
-    { id: "6", name: "Freelance", type: "income" },
-    { id: '7', name: 'Groceries', type: 'expense' },
-    { id: '8', name: 'Utilities', type: 'expense' },
-    { id: '9', name: 'Housing', type: 'expense' },
-    { id: '10', name: 'Health', type: 'expense' },
-    { id: '11', name: 'Investment', type: 'income' },
-    { id: '12', name: 'Gifts', type: 'expense' },
-];
-
-type BudgetWithId = Budget & { id: string };
+type BudgetWithDetails = Budget & { spent: number, categoryName: string };
 
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState<Omit<Budget, 'id'>[]>(initialBudgets);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const { budgets, deleteBudget } = useBudgets();
+  const { categories, addCategory } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<BudgetWithId | null>(null);
+  const [editingBudget, setEditingBudget] = useState<BudgetWithDetails | null>(null);
   const { date } = useDateRange();
   const { formatCurrency } = useCurrency();
   const { transactions } = useTransactions();
   
 
-  const processedBudgets: (BudgetWithId & { spent: number, categoryName: string})[] = useMemo(() => {
-    return budgets.map((budget, index) => {
-      const id = (index + 1).toString();
+  const processedBudgets: BudgetWithDetails[] = useMemo(() => {
+    return budgets.map((budget) => {
       const category = categories.find(c => c.id === budget.categoryId);
       const spent = transactions
-        .filter(t => t.category === category?.name && t.type === 'expense' && date?.from && date?.to && isWithinInterval(parseISO(t.date), {start: date.from, end: date.to}))
+        .filter(t => t.categoryId === budget.categoryId && t.type === 'expense' && date?.from && date?.to && isWithinInterval(parseISO(t.date), {start: date.from, end: date.to}))
         .reduce((sum, t) => sum + t.amount, 0);
       return {
         ...budget,
-        id,
         categoryName: category?.name || 'Unknown',
         spent: spent,
       };
@@ -84,34 +61,30 @@ export default function BudgetsPage() {
     setDialogOpen(true);
   };
 
-  const handleEditBudget = (budget: BudgetWithId) => {
+  const handleEditBudget = (budget: BudgetWithDetails) => {
     setEditingBudget(budget);
     setDialogOpen(true);
   };
 
-  const handleDeleteBudget = (id: string) => {
-    setBudgets(prev => prev.filter((b, index) => (index + 1).toString() !== id));
+  const handleDeleteBudget = async (id: string) => {
+    await deleteBudget(id);
   };
 
-  const handleSaveBudget = (data: { categoryId: string; limit: number }) => {
-    if (editingBudget) {
-        setBudgets(prev => prev.map((b, index) => (index + 1).toString() === editingBudget.id ? { ...b, limit: data.limit } : b));
-    } else {
-         if (!budgets.some(b => b.categoryId === data.categoryId)) {
-            setBudgets(prev => [...prev, data]);
-        }
-    }
+  const handleSaveSuccess = () => {
     setDialogOpen(false);
     setEditingBudget(null);
   };
 
-  const handleCategoryCreated = (name: string) => {
+  const handleCategoryCreated = async (name: string) => {
+      const newCategoryId = await addCategory({ name, type: 'expense' });
+      if (!newCategoryId) throw new Error("Failed to create category");
+      
       const newCategory: Category = {
-          id: (categories.length + 1).toString(),
+          id: newCategoryId,
           name,
-          type: 'expense'
+          type: 'expense',
+          userId: '' // This will be set by the context
       };
-      setCategories(prev => [...prev, newCategory]);
       return newCategory;
   }
 
@@ -194,10 +167,9 @@ export default function BudgetsPage() {
           <DialogTitle>{editingBudget ? "Edit" : "Add"} Budget</DialogTitle>
         </DialogHeader>
         <BudgetForm
-          onSubmit={handleSaveBudget}
+          onSuccess={handleSaveSuccess}
           existingBudget={editingBudget}
           allBudgets={processedBudgets}
-          categories={categories.filter(c => c.type === 'expense')}
           onCategoryCreated={handleCategoryCreated}
         />
       </DialogContent>

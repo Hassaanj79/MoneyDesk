@@ -21,7 +21,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { Account } from "@/types";
+import { useAccounts } from "@/contexts/account-context";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -30,10 +30,11 @@ const formSchema = z.object({
 });
 
 type AddAccountFormProps = {
-  onAccountAdded: (account: Omit<Account, 'id' | 'balance'>) => void;
+  onSuccess: (accountName: string) => void;
 };
 
-export function AddAccountForm({ onAccountAdded }: AddAccountFormProps) {
+export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
+  const { addAccount } = useAccounts();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -43,8 +44,10 @@ export function AddAccountForm({ onAccountAdded }: AddAccountFormProps) {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    onAccountAdded(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await addAccount(values);
+    onSuccess(values.name);
+    form.reset();
   }
 
   return (

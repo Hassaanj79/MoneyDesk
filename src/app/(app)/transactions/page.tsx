@@ -47,9 +47,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useCurrency } from "@/hooks/use-currency";
+import { useCategories } from "@/contexts/category-context";
 
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useTransactions();
+  const { categories } = useCategories();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -93,6 +95,10 @@ export default function TransactionsPage() {
     setDeleteDialogOpen(false);
     setSelectedTransaction(null);
   }
+  
+  const getCategoryName = (categoryId: string) => {
+      return categories.find(c => c.id === categoryId)?.name || 'N/A'
+  }
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -107,7 +113,7 @@ export default function TransactionsPage() {
       filtered = filtered.filter((t) => t.type === filter);
     }
 
-    return filtered;
+    return filtered.sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
   }, [transactions, date, filter]);
 
   return (
@@ -179,7 +185,7 @@ export default function TransactionsPage() {
                       </TableCell>
                       <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{transaction.category}</Badge>
+                        <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
                       </TableCell>
                       <TableCell
                         className={cn(

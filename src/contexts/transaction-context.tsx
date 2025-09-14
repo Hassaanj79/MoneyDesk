@@ -3,12 +3,14 @@
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
 import type { Transaction } from '@/types';
-import { transactions as initialTransactions } from '@/lib/data';
+import { useAuth } from './auth-context';
+import { addTransaction as addTransactionService, deleteTransaction as deleteTransactionService, getTransactions, updateTransaction as updateTransactionService } from '@/services/transactions';
+import { onSnapshot } from 'firebase/firestore';
 
 interface TransactionContextType {
   transactions: Transaction[];
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
-  updateTransaction: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'userId'>) => Promise<string | undefined>;
+  updateTransaction: (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'userId'>>) => Promise<void>;
   deleteTransaction: (id: string) => Promise<void>;
   loading: boolean;
 }
@@ -16,19 +18,47 @@ interface TransactionContextType {
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
 
 export const TransactionProvider = ({ children }: { children: ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(initialTransactions.map(t => ({...t, categoryIcon: ''})));
-  const [loading, setLoading] = useState(false);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
 
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    setTransactions(prev => [...prev, { ...transaction, id: new Date().toISOString() }]);
+  useEffect(() => {
+    if (user) {
+      setLoading(true);
+      const q = getTransactions(user.uid);
+      const unsubscribe = onSnapshot(q, (querySnapshot) => {
+        const userTransactions: Transaction[] = [];
+        querySnapshot.forEach((doc) => {
+          userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
+        });
+        setTransactions(userTransactions);
+        setLoading(false);
+      }, (error) => {
+        console.error("Error fetching transactions:", error);
+        setLoading(false);
+      });
+
+      return () => unsubscribe();
+    } else {
+      setTransactions([]);
+      setLoading(false);
+    }
+  }, [user]);
+
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
+    if (!user) throw new Error("User not authenticated");
+    const newDoc = await addTransactionService(user.uid, transaction);
+    return newDoc?.id;
   };
 
-  const updateTransaction = async (id: string, updatedTransaction: Partial<Omit<Transaction, 'id'>>) => {
-    setTransactions(prev => prev.map(t => t.id === id ? { ...t, ...updatedTransaction } as Transaction : t));
+  const updateTransaction = async (id: string, updatedTransaction: Partial<Omit<Transaction, 'id' | 'userId'>>) => {
+     if (!user) throw new Error("User not authenticated");
+    await updateTransactionService(user.uid, id, updatedTransaction);
   };
   
   const deleteTransaction = async (id: string) => {
-    setTransactions(prev => prev.filter(t => t.id !== id));
+    if (!user) throw new Error("User not authenticated");
+    await deleteTransactionService(user.uid, id);
   };
 
   return (

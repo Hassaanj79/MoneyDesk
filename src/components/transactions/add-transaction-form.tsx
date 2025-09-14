@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -30,11 +31,13 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp, CalendarIcon, Upload } from "lucide-react";
 import { format } from "date-fns";
-import type { Account, Category } from "@/types";
+import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useAccounts } from "@/contexts/account-context";
+import { useCategories } from "@/contexts/category-context";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -42,7 +45,7 @@ const formSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive."),
   date: z.date(),
   accountId: z.string().min(1, "Please select an account."),
-  category: z.string().min(1, "Please select a category."),
+  categoryId: z.string().min(1, "Please select a category."),
   isRecurring: z.boolean().default(false),
   recurrenceFrequency: z.string().optional(),
   receipt: z.any().optional(),
@@ -53,28 +56,12 @@ type AddTransactionFormProps = {
   onSuccess?: () => void;
 };
 
-const accountsData: Account[] = [
-    { id: "1", name: 'Chase Checking', type: 'bank', initialBalance: 12500.50, balance: 0 },
-    { id: "2", name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00, balance: 0 },
-    { id: "3", name: 'PayPal', type: 'paypal', initialBalance: 850.25, balance: 0 },
-    { id: "4", name: 'Cash', type: 'cash', initialBalance: 300.00, balance: 0 },
-];
-const categoriesData: Category[] = [
-    { id: "1", name: "Food", type: "expense" },
-    { id: "2", name: "Shopping", type: "expense" },
-    { id: "3", name: "Transport", type: "expense" },
-    { id: "4", name: "Entertainment", type: "expense" },
-    { id: "5", name: "Salary", type: "income" },
-    { id: "6", name: "Freelance", type: "income" },
-    { id: '7', name: 'Groceries', type: 'expense' },
-];
-
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
   const { addTransaction } = useTransactions();
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
-  const [accounts] = useState<Account[]>(accountsData);
-  const [categories] = useState<Category[]>(categoriesData);
+  const { accounts } = useAccounts();
+  const { categories } = useCategories();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -83,22 +70,32 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       amount: undefined,
       date: new Date(),
       accountId: "",
-      category: "",
+      categoryId: "",
       name: "",
       isRecurring: false,
     },
   });
 
   useEffect(() => {
-    form.reset({ type });
+    form.reset({
+      type: type,
+      amount: undefined,
+      date: new Date(),
+      accountId: "",
+      categoryId: "",
+      name: "",
+      isRecurring: false,
+    });
   }, [type, form]);
   
 
   const isRecurring = form.watch("isRecurring");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    const { receipt, ...transactionData } = values;
+
     await addTransaction({
-      ...values,
+      ...transactionData,
       date: format(values.date, "yyyy-MM-dd"),
     });
 
@@ -215,7 +212,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
         <FormField
           control={form.control}
-          name="category"
+          name="categoryId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
@@ -227,7 +224,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 </FormControl>
                 <SelectContent>
                   {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

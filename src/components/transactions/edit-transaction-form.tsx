@@ -31,9 +31,10 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import type { Account, Category, Transaction } from "@/types";
+import type { Transaction } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
-import { useState } from "react";
+import { useAccounts } from "@/contexts/account-context";
+import { useCategories } from "@/contexts/category-context";
 
 
 const formSchema = z.object({
@@ -42,7 +43,7 @@ const formSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive."),
   date: z.date(),
   accountId: z.string().min(1, "Please select an account."),
-  category: z.string().min(1, "Please select a category."),
+  categoryId: z.string().min(1, "Please select a category."),
 });
 
 type EditTransactionFormProps = {
@@ -50,26 +51,10 @@ type EditTransactionFormProps = {
   onSuccess?: () => void;
 };
 
-const accountsData: Account[] = [
-    { id: "1", name: 'Chase Checking', type: 'bank', initialBalance: 12500.50, balance: 0 },
-    { id: "2", name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00, balance: 0 },
-    { id: "3", name: 'PayPal', type: 'paypal', initialBalance: 850.25, balance: 0 },
-    { id: "4", name: 'Cash', type: 'cash', initialBalance: 300.00, balance: 0 },
-];
-const categoriesData: Category[] = [
-    { id: "1", name: "Food", type: "expense" },
-    { id: "2", name: "Shopping", type: "expense" },
-    { id: "3", name: "Transport", type: "expense" },
-    { id: "4", name: "Entertainment", type: "expense" },
-    { id: "5", name: "Salary", type: "income" },
-    { id: "6", name: "Freelance", type: "income" },
-    { id: '7', name: 'Groceries', type: 'expense' },
-];
-
 export function EditTransactionForm({ transaction, onSuccess }: EditTransactionFormProps) {
   const { updateTransaction } = useTransactions();
-  const [accounts] = useState<Account[]>(accountsData);
-  const [categories] = useState<Category[]>(categoriesData);
+  const { accounts } = useAccounts();
+  const { categories } = useCategories();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -191,7 +176,7 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
 
         <FormField
           control={form.control}
-          name="category"
+          name="categoryId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
@@ -203,7 +188,7 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
                 </FormControl>
                 <SelectContent>
                   {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

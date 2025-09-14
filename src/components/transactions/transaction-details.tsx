@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
+import { useAccounts } from "@/contexts/account-context";
+import { useCategories } from "@/contexts/category-context";
 
 type TransactionDetailsProps = {
   transaction: Transaction;
@@ -13,8 +15,14 @@ type TransactionDetailsProps = {
 };
 
 export function TransactionDetails({ transaction, children }: TransactionDetailsProps) {
-  const { name, amount, type, date, category, accountId } = transaction;
+  const { name, amount, type, date, categoryId, accountId } = transaction;
   const { formatCurrency } = useCurrency();
+  const { accounts } = useAccounts();
+  const { categories } = useCategories();
+  
+  const account = accounts.find(a => a.id === accountId);
+  const category = categories.find(c => c.id === categoryId);
+
 
   return (
     <div className="space-y-4">
@@ -38,12 +46,12 @@ export function TransactionDetails({ transaction, children }: TransactionDetails
         <div>
           <p className="text-muted-foreground">Category</p>
           <div>
-            <Badge variant="outline">{category}</Badge>
+            <Badge variant="outline">{category?.name || 'N/A'}</Badge>
           </div>
         </div>
         <div>
           <p className="text-muted-foreground">Account</p>
-          <p>{accountId}</p>
+          <p>{account?.name || 'N/A'}</p>
         </div>
         <div>
           <p className="text-muted-foreground">Type</p>
