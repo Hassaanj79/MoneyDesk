@@ -111,13 +111,13 @@ export default function TransactionsPage() {
 
   return (
     <>
-      <TooltipProvider>
-        <Card>
-          <CardHeader className="flex-row items-center">
-            <div>
-              <CardTitle>Transactions</CardTitle>
-            </div>
-            <div className="ml-auto flex gap-2">
+      <Card>
+        <CardHeader className="flex-row items-center">
+          <div>
+            <CardTitle>Transactions</CardTitle>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <TooltipProvider>
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button
@@ -150,64 +150,64 @@ export default function TransactionsPage() {
                       <p>Add Expense</p>
                   </TooltipContent>
               </Tooltip>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="income">Income</TabsTrigger>
-                <TabsTrigger value="expense">Expense</TabsTrigger>
-              </TabsList>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Transaction</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((transaction) => (
-                      <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
-                        <TableCell className="font-medium">
-                          {transaction.name}
-                        </TableCell>
-                        <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{transaction.category}</Badge>
-                        </TableCell>
-                        <TableCell
-                          className={cn(
-                            "text-right",
-                            transaction.type === "income"
-                              ? "text-green-500"
-                              : "text-red-500"
-                          )}
-                        >
-                          {transaction.type === "expense" ? "-" : "+"}
-                          {formatCurrency(transaction.amount)}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
+            </TooltipProvider>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
+            <TabsList className="mb-4">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="income">Income</TabsTrigger>
+              <TabsTrigger value="expense">Expense</TabsTrigger>
+            </TabsList>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Transaction</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Category</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredTransactions.length > 0 ? (
+                  filteredTransactions.map((transaction) => (
+                    <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
+                      <TableCell className="font-medium">
+                        {transaction.name}
+                      </TableCell>
+                      <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{transaction.category}</Badge>
+                      </TableCell>
                       <TableCell
-                        colSpan={4}
-                        className="h-24 text-center"
+                        className={cn(
+                          "text-right",
+                          transaction.type === "income"
+                            ? "text-green-500"
+                            : "text-red-500"
+                        )}
                       >
-                        No transactions found for the selected filters.
+                        {transaction.type === "expense" ? "-" : "+"}
+                        {formatCurrency(transaction.amount)}
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </TooltipProvider>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={4}
+                      className="h-24 text-center"
+                    >
+                      No transactions found for the selected filters.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Add Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>

@@ -341,15 +341,15 @@ export function Header() {
         </div>
         <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
     </header>
-  )
+  );
 
   if (!isClient) {
     return <>{HeaderContent}</>;
   }
   
-  return isMobile ? <>{HeaderContent}</> : <TooltipProvider>{HeaderContent}</TooltipProvider>;
+  if (isMobile) {
+    return <>{HeaderContent}</>;
+  }
+
+  return <TooltipProvider>{HeaderContent}</TooltipProvider>;
 }
-
-    
-
-    
