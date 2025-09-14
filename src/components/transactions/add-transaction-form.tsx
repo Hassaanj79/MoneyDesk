@@ -1,0 +1,296 @@
+
+"use client";
+
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { Switch } from "@/components/ui/switch";
+import { cn } from "@/lib/utils";
+import { CalendarIcon, Upload } from "lucide-react";
+import { format } from "date-fns";
+import type { Account, Category } from "@/types";
+import { useTransactions } from "@/contexts/transaction-context";
+
+const accounts: Account[] = [
+  { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
+  { id: "2", name: "Venture Rewards", type: "credit-card", initialBalance: -2500.0, balance: 0 },
+  { id: "3", name: "PayPal", type: "paypal", initialBalance: 850.25, balance: 0 },
+  { id: "4", name: "Cash", type: "cash", initialBalance: 300.0, balance: 0 },
+];
+
+const categories: Category[] = [
+  { id: "1", name: "Food", type: "expense" },
+  { id: "2", name: "Shopping", type: "expense" },
+  { id: "3", name: "Transport", type: "expense" },
+  { id: "4", name: "Entertainment", type: "expense" },
+  { id: "5", name: "Salary", type: "income" },
+  { id: "6", name: "Freelance", type: "income" },
+  { id: '7', name: 'Groceries', type: 'expense' },
+  { id: '8', name: 'Utilities', type: 'expense' },
+];
+
+const formSchema = z.object({
+  type: z.enum(["income", "expense"]),
+  name: z.string().min(2, "Description is too short."),
+  amount: z.coerce.number().positive("Amount must be positive."),
+  date: z.date(),
+  accountId: z.string().min(1, "Please select an account."),
+  category: z.string().min(1, "Please select a category."),
+  isRecurring: z.boolean().default(false),
+  recurrenceFrequency: z.string().optional(),
+  receipt: z.any().optional(),
+});
+
+type AddTransactionFormProps = {
+  type: "income" | "expense";
+  onSuccess?: () => void;
+};
+
+export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
+  const { addTransaction } = useTransactions();
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      type: type,
+      amount: 0,
+      date: new Date(),
+      accountId: "",
+      category: "",
+      name: "",
+      isRecurring: false,
+    },
+  });
+
+  const isRecurring = form.watch("isRecurring");
+
+  function onSubmit(values: z.infer<typeof formSchema>) {
+    addTransaction({
+      ...values,
+      id: Date.now().toString(),
+      date: format(values.date, "yyyy-MM-dd"),
+    });
+    onSuccess?.();
+  }
+
+  const filteredCategories = categories.filter((c) => c.type === type);
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <FormField
+          control={form.control}
+          name="name"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Description</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., Coffee, Salary" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormField
+          control={form.control}
+          name="amount"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Amount</FormLabel>
+              <FormControl>
+                <Input type="number" placeholder="0.00" {...field} step="0.01"/>
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="date"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Date</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                        )}
+                        >
+                        {field.value ? (
+                            format(field.value, "PPP")
+                        ) : (
+                            <span>Pick a date</span>
+                        )}
+                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                    />
+                    </PopoverContent>
+                </Popover>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+
+            <FormField
+            control={form.control}
+            name="accountId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Account</FormLabel>
+                <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                >
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select an account" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {accounts.map((acc) => (
+                        <SelectItem key={acc.id} value={acc.id}>
+                        {acc.name}
+                        </SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+
+        <FormField
+          control={form.control}
+          name="category"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Category</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {filteredCategories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <div className="flex items-center space-x-2">
+            <FormField
+            control={form.control}
+            name="isRecurring"
+            render={({ field }) => (
+                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
+                <div className="space-y-0.5">
+                    <FormLabel>Recurring Transaction</FormLabel>
+                </div>
+                <FormControl>
+                    <Switch
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                    />
+                </FormControl>
+                </FormItem>
+            )}
+            />
+            {isRecurring && (
+                 <FormField
+                 control={form.control}
+                 name="recurrenceFrequency"
+                 render={({ field }) => (
+                   <FormItem className="flex-1">
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                       <FormControl>
+                         <SelectTrigger>
+                           <SelectValue placeholder="Frequency" />
+                         </SelectTrigger>
+                       </FormControl>
+                       <SelectContent>
+                         <SelectItem value="daily">Daily</SelectItem>
+                         <SelectItem value="weekly">Weekly</SelectItem>
+                         <SelectItem value="monthly">Monthly</SelectItem>
+                         <SelectItem value="yearly">Yearly</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </FormItem>
+                 )}
+               />
+            )}
+        </div>
+        
+        {type === 'expense' && (
+             <FormField
+             control={form.control}
+             name="receipt"
+             render={({ field }) => (
+               <FormItem>
+                 <FormLabel>Receipt</FormLabel>
+                 <FormControl>
+                   <Button variant="outline" asChild className="w-full cursor-pointer">
+                     <div>
+                       <Upload className="mr-2 h-4 w-4" />
+                       Upload or Capture Image
+                       <Input type="file" accept="image/*" className="sr-only" onChange={(e) => field.onChange(e.target.files)} />
+                     </div>
+                   </Button>
+                 </FormControl>
+                 <FormMessage />
+               </FormItem>
+             )}
+           />
+        )}
+
+
+        <Button type="submit" className="w-full">
+          Add Transaction
+        </Button>
+      </form>
+    </Form>
+  );
+}
