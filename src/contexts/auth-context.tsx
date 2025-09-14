@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile } from 'firebase/auth';
+import { onAuthStateChanged, User, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 
 interface AuthContextType {
@@ -11,6 +11,7 @@ interface AuthContextType {
   login: (email: string, pass: string) => Promise<any>;
   signup: (email: string, pass: string, name: string) => Promise<any>;
   logout: () => Promise<any>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -44,7 +45,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return signOut(auth);
   }
 
-  const value = { user, loading, login, signup, logout };
+  const sendPasswordReset = (email: string) => {
+    return sendPasswordResetEmail(auth, email);
+  }
+
+  const value = { user, loading, login, signup, logout, sendPasswordReset };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

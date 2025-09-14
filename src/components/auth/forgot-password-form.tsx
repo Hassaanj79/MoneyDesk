@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/auth-context";
 import { useState } from "react";
 import { Alert, AlertDescription } from "../ui/alert";
@@ -23,31 +22,30 @@ import { Loader2 } from "lucide-react";
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
 });
 
-export function LoginForm() {
-  const router = useRouter();
-  const { login } = useAuth();
+export function ForgotPasswordForm() {
+  const { sendPasswordReset } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       email: "",
-      password: "",
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(true);
     setError(null);
+    setSuccess(null);
     try {
-      await login(values.email, values.password);
-      router.push("/");
+      await sendPasswordReset(values.email);
+      setSuccess("If an account with this email exists, a password reset link has been sent.");
     } catch (err) {
-      setError("Invalid email or password. Please try again.");
+      setError("Failed to send password reset email. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -56,8 +54,8 @@ export function LoginForm() {
   return (
     <Card className="w-full max-w-sm">
         <CardHeader>
-            <CardTitle>Login</CardTitle>
-            <CardDescription>Enter your credentials to access your account.</CardDescription>
+            <CardTitle>Forgot Password</CardTitle>
+            <CardDescription>Enter your email to receive a password reset link.</CardDescription>
         </CardHeader>
         <CardContent>
             <Form {...form}>
@@ -65,6 +63,11 @@ export function LoginForm() {
                 {error && (
                     <Alert variant="destructive">
                         <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                )}
+                {success && (
+                    <Alert variant="default" className="border-green-500/50 text-green-700 dark:text-green-400 [&>svg]:text-green-700 dark:[&>svg]:text-green-400">
+                        <AlertDescription>{success}</AlertDescription>
                     </Alert>
                 )}
                 <FormField
@@ -80,37 +83,16 @@ export function LoginForm() {
                     </FormItem>
                 )}
                 />
-                <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                    <FormItem>
-                        <div className="flex items-center">
-                            <FormLabel>Password</FormLabel>
-                            <Link
-                                href="/forgot-password"
-                                className="ml-auto inline-block text-xs underline"
-                            >
-                                Forgot your password?
-                            </Link>
-                        </div>
-                    <FormControl>
-                        <Input type="password" placeholder="••••••••" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Login
+                  Send Reset Link
                 </Button>
             </form>
             </Form>
             <div className="mt-4 text-center text-sm">
-                Don't have an account?{" "}
-                <Link href="/signup" className="underline">
-                    Sign up
+                Remember your password?{" "}
+                <Link href="/login" className="underline">
+                    Login
                 </Link>
             </div>
         </CardContent>
