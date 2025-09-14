@@ -35,7 +35,7 @@ export function LoginForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     // Here you would typically handle authentication
-    router.push('/');
+    router.push("/");
   }
 
   return (

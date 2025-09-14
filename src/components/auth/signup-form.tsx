@@ -37,7 +37,7 @@ export function SignupForm() {
   function onSubmit(values: z.infer<typeof formSchema>) {
     console.log(values);
     // Here you would typically handle user registration
-    router.push('/');
+    router.push("/");
   }
 
   return (
