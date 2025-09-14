@@ -14,10 +14,9 @@ export const getTransactions = (userId: string) => {
 // Add a new transaction
 export const addTransaction = async (userId: string, transaction: Omit<Transaction, 'id' | 'userId'>) => {
     const transactionsCol = getTransactionsCollection(userId);
-    // Convert date string to Firestore Timestamp if it's not already
     const transactionData = {
         ...transaction,
-        date: transaction.date instanceof Date ? Timestamp.fromDate(transaction.date) : Timestamp.fromDate(new Date(transaction.date))
+        date: new Date(transaction.date)
     };
     return await addDoc(transactionsCol, transactionData);
 };
@@ -26,10 +25,9 @@ export const addTransaction = async (userId: string, transaction: Omit<Transacti
 export const updateTransaction = async (userId: string, transactionId: string, updates: Partial<Omit<Transaction, 'id' | 'userId'>>) => {
     const transactionsCol = getTransactionsCollection(userId);
     const transactionRef = doc(transactionsCol, transactionId);
-    // Convert date string to Firestore Timestamp if it's being updated
     const updateData = { ...updates };
-    if (updates.date && !(updates.date instanceof Timestamp)) {
-        updateData.date = Timestamp.fromDate(new Date(updates.date));
+    if (updates.date) {
+        updateData.date = new Date(updates.date);
     }
     await updateDoc(transactionRef, updateData);
 };

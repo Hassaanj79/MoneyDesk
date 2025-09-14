@@ -5,7 +5,7 @@ import React, { createContext, useContext, useState, ReactNode, useEffect } from
 import type { Transaction } from '@/types';
 import { useAuth } from './auth-context';
 import { addTransaction as addTransactionService, deleteTransaction as deleteTransactionService, getTransactions, updateTransaction as updateTransactionService } from '@/services/transactions';
-import { onSnapshot } from 'firebase/firestore';
+import { Timestamp, onSnapshot } from 'firebase/firestore';
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -29,7 +29,12 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
       const unsubscribe = onSnapshot(q, (querySnapshot) => {
         const userTransactions: Transaction[] = [];
         querySnapshot.forEach((doc) => {
-          userTransactions.push({ id: doc.id, ...doc.data() } as Transaction);
+          const data = doc.data();
+          userTransactions.push({ 
+            id: doc.id, 
+            ...data,
+            date: (data.date as Timestamp).toDate().toISOString()
+          } as Transaction);
         });
         setTransactions(userTransactions);
         setLoading(false);
