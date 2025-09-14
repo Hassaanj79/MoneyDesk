@@ -8,6 +8,7 @@ import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
 import { useDateRange } from "@/contexts/date-range-context";
 import { transactions as allTransactions } from "@/lib/data";
 import { format, eachMonthOfInterval, startOfMonth, endOfMonth, isWithinInterval, parseISO } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 const chartConfig = {
   income: {
@@ -29,6 +30,7 @@ type MonthlyData = {
 const IncomeExpenseChart = () => {
   const { date } = useDateRange();
   const [chartData, setChartData] = useState<MonthlyData[]>([]);
+  const { formatCurrency } = useCurrency();
 
   useEffect(() => {
     if (date?.from && date?.to) {
@@ -85,10 +87,10 @@ const IncomeExpenseChart = () => {
             <BarChart accessibilityLayer data={chartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
-              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} />
+              <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact'})} />
               <Tooltip
                 cursor={{ fill: "hsl(var(--muted))" }}
-                content={<ChartTooltipContent />}
+                content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
               />
               <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="expense" fill="var(--color-expense)" radius={[4, 4, 0, 0]} />

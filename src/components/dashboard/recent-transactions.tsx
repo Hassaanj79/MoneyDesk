@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 const categoryIcons = {
     "Food": UtensilsCrossed,
@@ -30,6 +31,7 @@ const categoryIcons = {
 const RecentTransactions = () => {
   const { transactions } = useTransactions();
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
 
   const recentTransactions = useMemo(() => {
     const sorted = [...transactions].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
@@ -68,7 +70,7 @@ const RecentTransactions = () => {
                   <p className="text-sm text-muted-foreground">{transaction.date}</p>
                 </div>
                 <div className={`ml-auto font-medium ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`}>
-                  {transaction.type === 'expense' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                  {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
                 </div>
               </div>
             );

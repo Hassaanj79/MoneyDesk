@@ -41,6 +41,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useCurrency } from "@/hooks/use-currency";
 
 const generatedReports = [
   { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
@@ -61,6 +62,7 @@ export default function ReportsPage() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
   const { addNotification } = useNotifications();
+  const { formatCurrency, currency } = useCurrency();
 
   const { from, to } = date || {};
   const fromDate = from ? format(from, "LLL dd, y") : null;
@@ -123,9 +125,9 @@ export default function ReportsPage() {
     autoTable(doc, {
         startY: 50,
         body: [
-            ['Total Income', `$${totalIncome.toFixed(2)}`],
-            ['Total Expenses', `$${totalExpense.toFixed(2)}`],
-            ['Net Savings', `$${netSavings.toFixed(2)}`],
+            ['Total Income', formatCurrency(totalIncome)],
+            ['Total Expenses', formatCurrency(totalExpense)],
+            ['Net Savings', formatCurrency(netSavings)],
         ],
         theme: 'striped',
         styles: { fontSize: 12 },
@@ -138,7 +140,7 @@ export default function ReportsPage() {
     autoTable(doc, {
         startY: tableStartY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, `$${t.amount.toFixed(2)}`]),
+        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
     });
@@ -149,7 +151,7 @@ export default function ReportsPage() {
      autoTable(doc, {
         startY: secondTableY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, `$${t.amount.toFixed(2)}`]),
+        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [192, 57, 43] },
     });
@@ -168,7 +170,7 @@ export default function ReportsPage() {
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
     const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
 
-    const headers = ['Date', 'Description', 'Category', 'Amount'];
+    const headers = ['Date', 'Description', 'Category', `Amount (${currency})`];
     
     const formatTransactionsToCSV = (transactions: typeof currentPeriodTransactions) => 
       transactions.map(t => 
@@ -186,9 +188,9 @@ export default function ReportsPage() {
       csvContent += `Date Range: ${fromDate} - ${toDate}\n`;
     }
     csvContent += "\nSummary\n";
-    csvContent += `Total Income,$${totalIncome.toFixed(2)}\n`;
-    csvContent += `Total Expenses,$${totalExpense.toFixed(2)}\n`;
-    csvContent += `Net Savings,$${netSavings.toFixed(2)}\n`;
+    csvContent += `Total Income,${totalIncome.toFixed(2)}\n`;
+    csvContent += `Total Expenses,${totalExpense.toFixed(2)}\n`;
+    csvContent += `Net Savings,${netSavings.toFixed(2)}\n`;
     
     csvContent += "\nIncome\n";
     csvContent += headers.join(',') + '\n';
@@ -249,7 +251,7 @@ export default function ReportsPage() {
                 <ArrowUp className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">${totalIncome.toFixed(2)}</div>
+                <div className="text-2xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -260,7 +262,7 @@ export default function ReportsPage() {
                 <ArrowDown className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-500">${totalExpense.toFixed(2)}</div>
+                <div className="text-2xl font-bold text-red-500">{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -269,7 +271,7 @@ export default function ReportsPage() {
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${netSavings.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(netSavings)}</div>
               </CardContent>
             </Card>
           </div>
@@ -299,13 +301,13 @@ export default function ReportsPage() {
                   tickMargin={8}
                 />
                 <YAxis
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted))" }}
-                  content={<ChartTooltipContent />}
+                  content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>}
                 />
                 <Bar dataKey="amount" fill="var(--color-amount)" radius={4} />
               </BarChart>

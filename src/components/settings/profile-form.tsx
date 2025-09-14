@@ -21,8 +21,9 @@ import { currencies, countries } from "@/lib/constants"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { useNotifications } from "@/hooks/use-notifications"
+import { useCurrency } from "@/hooks/use-currency"
 
 const profileFormSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -39,6 +40,8 @@ const profileFormSchema = z.object({
 export function ProfileForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>("https://picsum.photos/100");
   const { addNotification } = useNotifications();
+  const { currency, setCurrency } = useCurrency();
+  
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
@@ -49,14 +52,18 @@ export function ProfileForm() {
       state: "Anytown",
       zipcode: "12345",
       country: "US",
-      currency: "USD",
+      currency: currency,
     },
   })
+
+  useEffect(() => {
+    form.setValue('currency', currency);
+  }, [currency, form]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   function onSubmit(values: z.infer<typeof profileFormSchema>) {
-    console.log(values);
+    setCurrency(values.currency);
     addNotification({
       icon: User,
       title: 'Profile Updated',

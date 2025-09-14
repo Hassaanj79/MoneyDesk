@@ -24,6 +24,7 @@ import { BudgetForm } from "@/components/budgets/budget-form";
 import { transactions as allTransactions } from "@/lib/data";
 import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 const initialBudgets: Omit<Budget, 'spent' | 'categoryName'>[] = [
   { categoryId: "1", limit: 500 },
@@ -53,6 +54,7 @@ export default function BudgetsPage() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
 
   const transactions = useMemo(() => {
     if (date?.from && date?.to) {
@@ -163,14 +165,14 @@ export default function BudgetsPage() {
                           <span>Budget</span>
                         </div>
                         <div className="flex justify-between items-baseline">
-                          <span className="text-2xl font-bold">${budget.spent.toFixed(2)}</span>
-                          <span className="text-lg font-medium text-muted-foreground">/ ${budget.limit.toFixed(2)}</span>
+                          <span className="text-2xl font-bold">{formatCurrency(budget.spent)}</span>
+                          <span className="text-lg font-medium text-muted-foreground">/ {formatCurrency(budget.limit)}</span>
                         </div>
                         <Progress value={percentage} />
                         <div className="text-sm text-muted-foreground">
                           {percentage > 100 
-                            ? <p className="text-destructive font-medium">You've overspent by ${ (budget.spent - budget.limit).toFixed(2) }</p>
-                            : <p>${ (budget.limit - budget.spent).toFixed(2) } remaining</p>
+                            ? <p className="text-destructive font-medium">You've overspent by {formatCurrency(budget.spent - budget.limit)}</p>
+                            : <p>{formatCurrency(budget.limit - budget.spent)} remaining</p>
                           }
                         </div>
                       </div>

@@ -8,6 +8,7 @@ import { transactions as allTransactions } from '@/lib/data';
 import { useDateRange } from '@/contexts/date-range-context';
 import { isWithinInterval, parseISO } from 'date-fns';
 import type { Budget } from '@/types';
+import { useCurrency } from '@/hooks/use-currency';
 
 const initialBudgets: Omit<Budget, 'spent' | 'categoryName'>[] = [
   { categoryId: "1", limit: 500 },
@@ -25,6 +26,7 @@ const categories = [
 
 const BudgetOverview = () => {
     const { date } = useDateRange();
+    const { formatCurrency } = useCurrency();
 
     const transactions = useMemo(() => {
         if (date?.from && date?.to) {
@@ -63,7 +65,7 @@ const BudgetOverview = () => {
               <div className="flex justify-between mb-1">
                 <span className="text-sm font-medium">{budget.categoryName}</span>
                 <span className="text-sm text-muted-foreground">
-                  ${budget.spent.toFixed(2)} / ${budget.limit.toFixed(2)}
+                  {formatCurrency(budget.spent)} / {formatCurrency(budget.limit)}
                 </span>
               </div>
               <Progress value={percentage} />

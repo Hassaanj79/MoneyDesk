@@ -22,15 +22,17 @@ import BalanceCard from "@/components/dashboard/balance-card";
 import BudgetOverview from "@/components/dashboard/budget-overview";
 import IncomeExpenseChart from "@/components/dashboard/income-expense-chart";
 import RecentTransactions from "@/components/dashboard/recent-transactions";
-import { ArrowDown, ArrowUp, Wallet, History } from "lucide-react";
+import { ArrowDown, ArrowUp, Wallet } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
 import { SortableItem } from "./sortable-item";
 import { useTransactions } from "@/contexts/transaction-context";
 import { isWithinInterval, parseISO, subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function DashboardGrid() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
+  const { formatCurrency } = useCurrency();
 
   const { totalBalance, totalIncome, totalExpense, incomeChange, expenseChange } = useMemo(() => {
     const currentPeriodTransactions = transactions.filter(t => 
@@ -86,7 +88,7 @@ export default function DashboardGrid() {
       component: (
         <BalanceCard
           title="Total Balance"
-          amount={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+          amount={formatCurrency(totalBalance)}
           icon={Wallet}
         />
       ),
@@ -97,7 +99,7 @@ export default function DashboardGrid() {
       component: (
         <BalanceCard
           title="Income"
-          amount={`$${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+          amount={formatCurrency(totalIncome)}
           icon={ArrowUp}
           change={incomeChange}
         />
@@ -109,7 +111,7 @@ export default function DashboardGrid() {
       component: (
         <BalanceCard
           title="Expense"
-          amount={`$${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+          amount={formatCurrency(totalExpense)}
           icon={ArrowDown}
           change={expenseChange}
         />
@@ -166,16 +168,16 @@ export default function DashboardGrid() {
              <SortableItem key={item.id} id={item.id} className={item.colSpan}>
                 {item.id === 'balance' ? <BalanceCard
                     title="Total Balance"
-                    amount={`$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                    amount={formatCurrency(totalBalance)}
                     icon={Wallet}
                     /> : item.id === 'income' ? <BalanceCard
                     title="Income"
-                    amount={`$${totalIncome.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                    amount={formatCurrency(totalIncome)}
                     icon={ArrowUp}
                     change={incomeChange}
                     /> : item.id === 'expense' ? <BalanceCard
                     title="Expense"
-                    amount={`$${totalExpense.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2})}`}
+                    amount={formatCurrency(totalExpense)}
                     icon={ArrowDown}
                     change={expenseChange}
                     /> : item.component

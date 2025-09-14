@@ -5,6 +5,7 @@ import type { Transaction } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
 
 type TransactionDetailsProps = {
   transaction: Transaction;
@@ -13,6 +14,7 @@ type TransactionDetailsProps = {
 
 export function TransactionDetails({ transaction, children }: TransactionDetailsProps) {
   const { name, amount, type, date, category, accountId } = transaction;
+  const { formatCurrency } = useCurrency();
 
   return (
     <div className="space-y-4">
@@ -24,7 +26,7 @@ export function TransactionDetails({ transaction, children }: TransactionDetails
             type === "income" ? "text-green-500" : "text-red-500"
           )}
         >
-          {type === "expense" ? "-" : "+"}${amount.toFixed(2)}
+          {type === "expense" ? "-" : "+"}{formatCurrency(amount)}
         </div>
       </div>
 

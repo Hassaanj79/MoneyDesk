@@ -34,6 +34,7 @@ import { format } from "date-fns";
 import type { Account, Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
+import { useCurrency } from "@/hooks/use-currency";
 
 const accounts: Account[] = [
   { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
@@ -73,6 +74,7 @@ type AddTransactionFormProps = {
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
   const { addTransaction } = useTransactions();
   const { addNotification } = useNotifications();
+  const { formatCurrency } = useCurrency();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -98,7 +100,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     addNotification({
       icon: values.type === 'income' ? ArrowUp : ArrowDown,
       title: `Transaction Added`,
-      description: `${values.name} for $${values.amount.toFixed(2)} has been saved.`,
+      description: `${values.name} for ${formatCurrency(values.amount)} has been saved.`,
     });
 
     onSuccess?.();

@@ -45,6 +45,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useCurrency } from "@/hooks/use-currency";
 
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useTransactions();
@@ -59,6 +60,7 @@ export default function TransactionsPage() {
   const [dialogTitle, setDialogTitle] = useState("Add Expense");
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
 
   const handleTriggerClick = (type: "income" | "expense") => {
     setTransactionType(type);
@@ -186,7 +188,7 @@ export default function TransactionsPage() {
                           )}
                         >
                           {transaction.type === "expense" ? "-" : "+"}
-                          ${transaction.amount.toFixed(2)}
+                          {formatCurrency(transaction.amount)}
                         </TableCell>
                       </TableRow>
                     ))

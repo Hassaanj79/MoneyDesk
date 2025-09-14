@@ -39,6 +39,7 @@ import {
 import type { Account } from "@/types";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useCurrency } from "@/hooks/use-currency";
 
 const initialAccounts: Omit<Account, 'balance'>[] = [
   { id: '1', name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
@@ -67,6 +68,7 @@ export default function AccountsPage() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const { transactions } = useTransactions();
+  const { formatCurrency } = useCurrency();
 
   const processedAccounts: Account[] = useMemo(() => {
     return accounts.map(account => {
@@ -133,7 +135,7 @@ export default function AccountsPage() {
                     <TableCell className="font-medium">{account.name}</TableCell>
                     <TableCell>{getAccountTypeLabel(account.type)}</TableCell>
                     <TableCell className="text-right">
-                      ${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                      {formatCurrency(account.balance)}
                     </TableCell>
                      <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={(e) => {
