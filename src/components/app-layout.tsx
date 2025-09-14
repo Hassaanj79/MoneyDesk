@@ -238,18 +238,20 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
           </div>
           <Separator />
           <div className="p-2 space-y-2 max-h-80 overflow-y-auto">
-              {notifications.length > 0 ? notifications.slice(0, 5).map((notification, index) => {
+              {notifications.length > 0 ? notifications.slice(0, 5).map((notification) => {
                   const Icon = notification.icon;
                   return (
-                      <div key={index} className={cn("flex items-start p-2 rounded-lg hover:bg-muted", !notification.read && "bg-primary/10")}>
-                          <div className="p-2 bg-muted rounded-full">
-                              <Icon className="h-5 w-5 text-muted-foreground" />
-                          </div>
-                          <div className="ml-4 flex-1">
-                              <p className="text-sm font-medium">{notification.title}</p>
-                              <p className="text-xs text-muted-foreground">{notification.description}</p>
-                          </div>
-                      </div>
+                      <Link href="/notifications" key={notification.id} className="block">
+                        <div className={cn("flex items-start p-2 rounded-lg hover:bg-muted", !notification.read && "bg-primary/10")}>
+                            <div className="p-2 bg-muted rounded-full">
+                                <Icon className="h-5 w-5 text-muted-foreground" />
+                            </div>
+                            <div className="ml-4 flex-1">
+                                <p className="text-sm font-medium">{notification.title}</p>
+                                <p className="text-xs text-muted-foreground">{notification.description}</p>
+                            </div>
+                        </div>
+                      </Link>
                   )
               }) : (
                 <div className="text-center text-sm text-muted-foreground p-4">
@@ -362,5 +364,3 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 };
 
 export default AppLayout;
-
-    
