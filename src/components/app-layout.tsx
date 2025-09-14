@@ -35,7 +35,8 @@ import {
   CreditCard,
   X,
   Loader2,
-  History
+  History,
+  Eye
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import Link from "next/link";
@@ -70,6 +71,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     { href: "/accounts", label: "Accounts", icon: Wallet },
     { href: "/budgets", label: "Budgets", icon: Target },
     { href: "/reports", label: "Reports", icon: BarChart3 },
+    { href: "/notifications", label: "Notifications", icon: Bell },
   ];
 
   const pageTitles: { [key: string]: string } = {
@@ -79,6 +81,7 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
     "/budgets": "Budgets",
     "/reports": "Reports",
     "/settings": "Settings",
+    "/notifications": "Notifications",
   };
 
   const currentPageTitle = pageTitles[pathname] || "Dashboard";
@@ -234,8 +237,8 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
               <p className="text-sm text-muted-foreground">You have {notifications.filter(n => !n.read).length} unread messages.</p>
           </div>
           <Separator />
-          <div className="p-2 space-y-2">
-              {notifications.length > 0 ? notifications.map((notification, index) => {
+          <div className="p-2 space-y-2 max-h-80 overflow-y-auto">
+              {notifications.length > 0 ? notifications.slice(0, 5).map((notification, index) => {
                   const Icon = notification.icon;
                   return (
                       <div key={index} className={cn("flex items-start p-2 rounded-lg hover:bg-muted", !notification.read && "bg-primary/10")}>
@@ -255,8 +258,13 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
               )}
           </div>
           <Separator />
-          <div className="p-2">
-              <Button size="sm" className="w-full" onClick={markAllAsRead} disabled={!notifications.some(n => !n.read)}>Mark all as read</Button>
+          <div className="p-2 flex justify-between items-center">
+              <Button size="sm" variant="outline" onClick={markAllAsRead} disabled={!notifications.some(n => !n.read)}>Mark all as read</Button>
+              <Button size="sm" asChild>
+                <Link href="/notifications">
+                  View All <Eye className="ml-2 h-4 w-4"/>
+                </Link>
+              </Button>
           </div>
           </PopoverContent>
         </Popover>
@@ -354,3 +362,5 @@ const AppLayout = ({ children }: { children: ReactNode }) => {
 };
 
 export default AppLayout;
+
+    
