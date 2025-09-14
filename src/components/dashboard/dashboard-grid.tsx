@@ -92,7 +92,7 @@ export default function DashboardGrid() {
           icon={Wallet}
         />
       ),
-      colSpan: "sm:col-span-1",
+      colSpan: "lg:col-span-1",
     },
     {
       id: "income",
@@ -104,7 +104,7 @@ export default function DashboardGrid() {
           change={incomeChange}
         />
       ),
-      colSpan: "sm:col-span-1",
+      colSpan: "lg:col-span-1",
     },
     {
       id: "expense",
@@ -116,22 +116,22 @@ export default function DashboardGrid() {
           change={expenseChange}
         />
       ),
-      colSpan: "sm:col-span-1",
+      colSpan: "lg:col-span-1",
     },
     {
       id: "chart",
       component: <IncomeExpenseChart />,
+      colSpan: "lg:col-span-3",
+    },
+    {
+      id: "budget",
+      component: <BudgetOverview />,
       colSpan: "lg:col-span-2",
     },
     {
       id: "recent",
       component: <RecentTransactions />,
       colSpan: "lg:col-span-1",
-    },
-    {
-      id: "budget",
-      component: <BudgetOverview />,
-      colSpan: "lg:col-span-3",
     },
   ];
 
@@ -163,7 +163,7 @@ export default function DashboardGrid() {
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={items.map(i => i.id)} strategy={rectSwappingStrategy}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {items.map((item) => (
              <SortableItem key={item.id} id={item.id} className={item.colSpan}>
                 {item.id === 'balance' ? <BalanceCard
