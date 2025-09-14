@@ -44,11 +44,18 @@ export function ProfileForm() {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const { addNotification } = useNotifications();
   const { currency, setCurrency } = useCurrency();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
+      name: "",
+      email: "",
+      phone: "",
+      street: "",
+      state: "",
+      zipcode: "",
+      country: "",
       currency: currency,
     },
   });
@@ -131,6 +138,14 @@ export function ProfileForm() {
     if (!name) return <User className="h-10 w-10" />;
     const initials = name.split(' ').map(n => n[0]).join('');
     return initials.slice(0, 2);
+  }
+
+  if (loading) {
+    return (
+        <div className="flex justify-center items-center h-40">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    )
   }
 
   return (
@@ -383,3 +398,5 @@ export function ProfileForm() {
     </Form>
   )
 }
+
+    
