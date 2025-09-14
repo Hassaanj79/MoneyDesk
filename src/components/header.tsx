@@ -165,7 +165,7 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+        <div className="flex w-full items-center gap-4 md:ml-auto md:gap-2 lg:gap-2">
             <div className="ml-auto flex-1 sm:flex-initial">
                 <DateRangePicker date={date} onDateChange={setDate} />
             </div>
@@ -353,3 +353,5 @@ export function Header() {
 
   return <TooltipProvider>{HeaderContent}</TooltipProvider>;
 }
+
+    
