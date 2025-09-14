@@ -30,10 +30,12 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
         const userTransactions: Transaction[] = [];
         querySnapshot.forEach((doc) => {
           const data = doc.data();
+          // This handles both Timestamp and string dates from Firestore
+          const date = data.date.toDate ? (data.date as Timestamp).toDate().toISOString() : data.date;
           userTransactions.push({ 
             id: doc.id, 
             ...data,
-            date: (data.date as Timestamp).toDate().toISOString()
+            date: date,
           } as Transaction);
         });
         setTransactions(userTransactions);
