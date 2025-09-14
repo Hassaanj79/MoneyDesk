@@ -32,3 +32,16 @@ export type Category = {
   name:string;
   type: 'income' | 'expense';
 };
+
+export type UserProfile = {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  street?: string;
+  state?: string;
+  zipcode?: string;
+  country?: string;
+  photoURL?: string;
+  currency?: string;
+};

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Camera, Check, ChevronsUpDown, User } from "lucide-react"
+import { Camera, Check, ChevronsUpDown, User, Loader2 } from "lucide-react"
 import { currencies, countries } from "@/lib/constants"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
@@ -24,10 +24,12 @@ import { cn } from "@/lib/utils"
 import { useRef, useState, useEffect } from "react"
 import { useNotifications } from "@/hooks/use-notifications"
 import { useCurrency } from "@/hooks/use-currency"
+import { useAuth } from "@/contexts/auth-context"
+import { getUserProfile, updateUserProfile } from "@/services/users"
 
 const profileFormSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters."),
-  email: z.string().email("Please enter a valid email address."),
+  name: z.string().min(2, "Name must be at least 2 characters.").optional(),
+  email: z.string().email("Please enter a valid email address.").optional(),
   phone: z.string().optional(),
   street: z.string().optional(),
   state: z.string().optional(),
@@ -38,37 +40,83 @@ const profileFormSchema = z.object({
 })
 
 export function ProfileForm() {
-  const [photoPreview, setPhotoPreview] = useState<string | null>("https://picsum.photos/100");
+  const { user } = useAuth();
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const { addNotification } = useNotifications();
   const { currency, setCurrency } = useCurrency();
+  const [loading, setLoading] = useState(false);
   
   const form = useForm<z.infer<typeof profileFormSchema>>({
     resolver: zodResolver(profileFormSchema),
     defaultValues: {
-      name: "Smith",
-      email: "smith@example.com",
-      phone: "+1 234 567 890",
-      street: "123 Main Street",
-      state: "Anytown",
-      zipcode: "12345",
-      country: "US",
       currency: currency,
     },
-  })
+  });
 
   useEffect(() => {
-    form.setValue('currency', currency);
-  }, [currency, form]);
+    if (user) {
+        setLoading(true);
+        getUserProfile(user.uid).then(profile => {
+            if (profile) {
+                form.reset({
+                    name: profile.name || user.displayName || '',
+                    email: profile.email || user.email || '',
+                    phone: profile.phone || '',
+                    street: profile.street || '',
+                    state: profile.state || '',
+                    zipcode: profile.zipcode || '',
+                    country: profile.country || '',
+                    currency: profile.currency || currency,
+                });
+                setPhotoPreview(profile.photoURL || user.photoURL || null);
+            } else {
+                 form.reset({
+                    name: user.displayName || '',
+                    email: user.email || '',
+                    currency: currency,
+                });
+                setPhotoPreview(user.photoURL || null);
+            }
+        }).finally(() => setLoading(false));
+    }
+  }, [user, currency, form]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  function onSubmit(values: z.infer<typeof profileFormSchema>) {
-    setCurrency(values.currency);
-    addNotification({
-      icon: User,
-      title: 'Profile Updated',
-      description: 'Your profile has been updated successfully.',
-    });
+  async function onSubmit(values: z.infer<typeof profileFormSchema>) {
+    if (!user) return;
+    setLoading(true);
+
+    // Note: In a real app, you would upload the photo to a storage service
+    // and get a URL back. For now, we'll just use the existing photoURL.
+    const { photo, ...profileData } = values;
+    
+    try {
+        await updateUserProfile(user.uid, {
+            ...profileData,
+            photoURL: photoPreview || undefined
+        });
+
+        if (values.currency) {
+            setCurrency(values.currency);
+        }
+
+        addNotification({
+            icon: User,
+            title: 'Profile Updated',
+            description: 'Your profile has been updated successfully.',
+        });
+    } catch (error) {
+        console.error("Failed to update profile", error);
+        addNotification({
+            icon: User,
+            title: 'Update Failed',
+            description: 'Could not update your profile. Please try again.',
+            variant: 'destructive',
+        });
+    } finally {
+        setLoading(false);
+    }
   }
   
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,6 +125,12 @@ export function ProfileForm() {
         setPhotoPreview(URL.createObjectURL(file));
         form.setValue("photo", file);
     }
+  }
+
+  const getInitials = (name?: string | null) => {
+    if (!name) return <User className="h-10 w-10" />;
+    const initials = name.split(' ').map(n => n[0]).join('');
+    return initials.slice(0, 2);
   }
 
   return (
@@ -89,7 +143,7 @@ export function ProfileForm() {
             <FormItem className="flex items-center space-x-4">
                <Avatar className="h-20 w-20">
                 <AvatarImage src={photoPreview || undefined} alt="Avatar" data-ai-hint="person face" />
-                <AvatarFallback>S</AvatarFallback>
+                <AvatarFallback>{getInitials(form.getValues('name'))}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col gap-2">
                 <Button 
@@ -157,8 +211,7 @@ export function ProfileForm() {
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
+        <FormField
             control={form.control}
             name="street"
             render={({ field }) => (
@@ -170,22 +223,21 @@ export function ProfileForm() {
                 <FormMessage />
                 </FormItem>
             )}
-            />
-            <FormField
+        />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+             <FormField
             control={form.control}
             name="state"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>State/Province</FormLabel>
+                <FormLabel>City / State</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g. California" {...field} />
+                    <Input placeholder="e.g. San Francisco" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
             )}
             />
-        </div>
-        <div className="grid grid-cols-2 gap-4">
             <FormField
             control={form.control}
             name="zipcode"
@@ -203,7 +255,7 @@ export function ProfileForm() {
                 control={form.control}
                 name="country"
                 render={({ field }) => (
-                    <FormItem className="flex flex-col">
+                    <FormItem className="flex flex-col pt-2">
                     <FormLabel>Country</FormLabel>
                         <Popover>
                         <PopoverTrigger asChild>
@@ -323,7 +375,10 @@ export function ProfileForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Update Profile</Button>
+        <Button type="submit" disabled={loading}>
+            {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Update Profile
+        </Button>
       </form>
     </Form>
   )
