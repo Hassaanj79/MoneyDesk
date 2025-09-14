@@ -2,12 +2,12 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import AppLayout from '@/components/app-layout';
 import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
 import { NotificationProvider } from '@/contexts/notification-context';
 import { CurrencyProvider } from '@/contexts/currency-context';
+import AppLayout from '@/components/app-layout';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
