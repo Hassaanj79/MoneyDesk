@@ -37,9 +37,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Account } from "@/types";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Wallet } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useCurrency } from "@/hooks/use-currency";
+import { useNotifications } from "@/hooks/use-notifications";
 
 const initialAccounts: Omit<Account, 'balance'>[] = [
   { id: '1', name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
@@ -69,6 +70,7 @@ export default function AccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const { transactions } = useTransactions();
   const { formatCurrency } = useCurrency();
+  const { addNotification } = useNotifications();
 
   const processedAccounts: Account[] = useMemo(() => {
     return accounts.map(account => {
@@ -86,6 +88,11 @@ export default function AccountsPage() {
     const newAccount = { ...newAccountData, id: (accounts.length + 1).toString() };
     setAccounts(prev => [...prev, newAccount]);
     setAddDialogOpen(false);
+    addNotification({
+        icon: Wallet,
+        title: 'Account Added',
+        description: `The account "${newAccount.name}" has been added successfully.`
+    })
   }
 
   const handleDeleteClick = (account: Account) => {
