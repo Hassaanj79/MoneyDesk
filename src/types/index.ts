@@ -10,7 +10,6 @@ export type Transaction = {
   accountId: string;
   isRecurring?: boolean;
   recurrenceFrequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
-  recurrenceDueDate?: number;
 };
 
 export type Budget = {
@@ -48,5 +47,7 @@ export type UserProfile = {
   photoURL?: string;
   currency?: string;
 };
+
+    
 
     
