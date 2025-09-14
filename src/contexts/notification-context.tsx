@@ -36,10 +36,13 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
       read: false,
     };
     setNotifications(prev => [newNotification, ...prev]);
+    
+    const Icon = notification.icon;
     toast({
       title: notification.title,
       description: notification.description,
-      variant: notification.variant
+      variant: notification.variant,
+      icon: <Icon className="h-5 w-5" />,
     });
   }, [toast]);
 
