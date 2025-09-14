@@ -29,15 +29,17 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { ArrowDown, ArrowUp, CalendarIcon, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera } from "lucide-react";
 import { format } from "date-fns";
 import type { Category } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { CameraCapture } from "./camera-capture";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -62,6 +64,8 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -107,6 +111,11 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
 
     onSuccess?.();
     form.reset();
+  }
+
+  const handlePhotoSelect = (photoDataUrl: string) => {
+    form.setValue("receipt", photoDataUrl);
+    setCameraOpen(false);
   }
 
   const filteredCategories = categories.filter((c) => c.type === type);
@@ -283,25 +292,55 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
         </div>
         
         {type === 'expense' && (
-             <FormField
-             control={form.control}
-             name="receipt"
-             render={({ field }) => (
-               <FormItem>
-                 <FormLabel>Receipt</FormLabel>
-                 <FormControl>
-                   <Button variant="outline" asChild className="w-full cursor-pointer">
-                     <div>
-                       <Upload className="mr-2 h-4 w-4" />
-                       Upload or Capture Image
-                       <Input type="file" accept="image/*" className="sr-only" onChange={(e) => field.onChange(e.target.files)} />
-                     </div>
-                   </Button>
-                 </FormControl>
-                 <FormMessage />
-               </FormItem>
-             )}
-           />
+            <FormField
+                control={form.control}
+                name="receipt"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Receipt</FormLabel>
+                    <FormControl>
+                        <div className="grid grid-cols-2 gap-2">
+                            <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Image
+                            </Button>
+                            <Input 
+                                type="file" 
+                                accept="image/*" 
+                                className="sr-only" 
+                                ref={fileInputRef} 
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                            form.setValue("receipt", reader.result as string);
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                            />
+
+                            <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" type="button">
+                                        <Camera className="mr-2 h-4 w-4" />
+                                        Capture Image
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Capture Receipt</DialogTitle>
+                                </DialogHeader>
+                                <CameraCapture onPhotoTaken={handlePhotoSelect} />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         )}
 
 
