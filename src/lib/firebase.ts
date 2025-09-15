@@ -20,6 +20,7 @@ export const db = getFirestore(app);
 
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
     try {
+        console.log("Connecting to Firebase Emulators");
         connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
         connectFirestoreEmulator(db, "127.0.0.1", 8080);
     } catch (e) {

@@ -2,7 +2,7 @@
 "use client";
 
 import { useAuth } from "@/contexts/auth-context";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -13,14 +13,19 @@ export default function AuthLayout({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     if (!loading && user) {
+      if (pathname === '/forgot-password') {
+        // don't redirect if user is on forgot password page
+        return;
+      }
       router.push("/");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, pathname]);
 
-  if (loading || user) {
+  if (loading || (user && pathname !== '/forgot-password')) {
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
