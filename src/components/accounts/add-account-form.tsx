@@ -31,7 +31,7 @@ const formSchema = z.object({
 });
 
 type AddAccountFormProps = {
-  onSuccess: (accountName: string, values: Omit<Account, 'id' | 'userId' | 'balance'>) => void;
+  onSuccess: (accountName: string) => void;
 };
 
 export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
@@ -46,11 +46,8 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    if (onSuccess) {
-      onSuccess(values.name, values);
-    } else {
-      await addAccount(values);
-    }
+    await addAccount(values);
+    onSuccess(values.name);
     form.reset();
   }
 
@@ -117,3 +114,5 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
     </Form>
   );
 }
+
+    

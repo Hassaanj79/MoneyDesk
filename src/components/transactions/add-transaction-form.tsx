@@ -42,7 +42,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CameraCapture } from "./camera-capture";
 import Image from "next/image";
 import { CategoryCombobox } from "../categories/category-combobox";
-import { AccountCombobox } from "../accounts/account-combobox";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -102,11 +101,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const receiptPreview = form.watch("receipt");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { ...transactionData } = values;
+    const { receipt, ...transactionData } = values;
+    const finalReceipt = receipt ? receipt : null;
 
     await addTransaction({
       ...transactionData,
       date: format(values.date, "yyyy-MM-dd"),
+      receipt: finalReceipt,
     });
 
     addNotification({
@@ -209,11 +210,20 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <AccountCombobox
-                  accounts={accounts}
-                  value={field.value}
-                  onChange={field.onChange}
-                />
+                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select an account" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {accounts.map(acc => (
+                      <SelectItem key={acc.id} value={acc.id}>
+                        {acc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}
@@ -365,3 +375,5 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     </Form>
   );
 }
+
+    

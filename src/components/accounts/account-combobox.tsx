@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, PlusCircle, Wallet } from "lucide-react"
+import { Check, ChevronsUpDown } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -19,17 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
-} from "@/components/ui/dialog";
 import type { Account } from "@/types"
-import { AddAccountForm } from "./add-account-form"
-import { useAccounts } from "@/contexts/account-context"
-import { useNotifications } from "@/hooks/use-notifications"
 
 type AccountComboboxProps = {
     accounts: Account[];
@@ -51,87 +41,55 @@ export function AccountCombobox({
     emptyPlaceholder = "No account found.",
 }: AccountComboboxProps) {
   const [open, setOpen] = React.useState(false);
-  const [addAccountDialogOpen, setAddAccountDialogOpen] = React.useState(false);
-  const { addAccount } = useAccounts();
-  const { addNotification } = useNotifications();
-
-
-  const handleCreateSuccess = async (newAccountName: string, newAccount: Omit<Account, 'id' | 'userId' | 'balance'>) => {
-    const newAccountId = await addAccount(newAccount);
-    if(newAccountId) {
-      onChange(newAccountId);
-      addNotification({
-          icon: Wallet,
-          title: 'Account Added',
-          description: `The account "${newAccountName}" has been added successfully.`
-      });
-      setAddAccountDialogOpen(false);
-      setOpen(false);
-    }
-  };
-
+  
   return (
-    <Dialog open={addAccountDialogOpen} onOpenChange={setAddAccountDialogOpen}>
-        <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-            <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between"
-            disabled={disabled}
-            >
-            {value
-                ? accounts.find((account) => account.id === value)?.name
-                : placeholder}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-            </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-            <Command>
-            <CommandInput 
-                placeholder={searchPlaceholder} 
-            />
-            <CommandList>
-                <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
-                <CommandGroup>
-                {accounts.map((account) => (
-                    <CommandItem
-                    key={account.id}
-                    value={account.id}
-                    onSelect={(currentValue) => {
-                        onChange(currentValue)
-                        setOpen(false)
-                    }}
-                    >
-                    <Check
-                        className={cn(
-                        "mr-2 h-4 w-4",
-                        value === account.id ? "opacity-100" : "opacity-0"
-                        )}
-                    />
-                    {account.name}
-                    </CommandItem>
-                ))}
-                <DialogTrigger asChild>
-                    <CommandItem onSelect={() => {
-                        setAddAccountDialogOpen(true);
-                    }}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Create new account
-                    </CommandItem>
-                </DialogTrigger>
-                </CommandGroup>
-            </CommandList>
-            </Command>
-        </PopoverContent>
-        </Popover>
-        <DialogContent>
-            <DialogHeader>
-                <DialogTitle>Add a New Account</DialogTitle>
-            </DialogHeader>
-            <AddAccountForm onSuccess={(name, values) => handleCreateSuccess(name, values)} />
-        </DialogContent>
-    </Dialog>
+    <Popover open={open} onOpenChange={setOpen}>
+    <PopoverTrigger asChild>
+        <Button
+        variant="outline"
+        role="combobox"
+        aria-expanded={open}
+        className="w-full justify-between"
+        disabled={disabled}
+        >
+        {value
+            ? accounts.find((account) => account.id === value)?.name
+            : placeholder}
+        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+    </PopoverTrigger>
+    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+        <Command>
+        <CommandInput 
+            placeholder={searchPlaceholder} 
+        />
+        <CommandList>
+            <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
+            <CommandGroup>
+            {accounts.map((account) => (
+                <CommandItem
+                key={account.id}
+                value={account.id}
+                onSelect={(currentValue) => {
+                    onChange(currentValue)
+                    setOpen(false)
+                }}
+                >
+                <Check
+                    className={cn(
+                    "mr-2 h-4 w-4",
+                    value === account.id ? "opacity-100" : "opacity-0"
+                    )}
+                />
+                {account.name}
+                </CommandItem>
+            ))}
+            </CommandGroup>
+        </CommandList>
+        </Command>
+    </PopoverContent>
+    </Popover>
   )
 }
+
+    
