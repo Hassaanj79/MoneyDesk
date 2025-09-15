@@ -40,13 +40,13 @@ const gridComponents = [
       id: "income",
       component: BalanceCard,
       colSpan: "md:col-span-1",
-       props: { title: "Income", icon: ArrowDown }
+       props: { title: "Income", icon: ArrowDown, className: "text-green-500", iconClassName: "text-green-500" }
     },
     {
       id: "expense",
       component: BalanceCard,
       colSpan: "md:col-span-1",
-      props: { title: "Expense", icon: ArrowUp }
+      props: { title: "Expense", icon: ArrowUp, className: "text-red-500", iconClassName: "text-red-500" }
     },
     {
       id: "chart",
