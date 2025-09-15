@@ -31,15 +31,24 @@ export default function AuthenticatedLayout({
     // After auth is loaded and we have a user, check their profile.
     getUserProfile(user.uid)
       .then((profile) => {
-        if (pathname === '/welcome') {
-          // If they are on the welcome page, let them be.
-          setProfileLoading(false);
-        } else if (!profile?.onboardingCompleted) {
-          // If not on welcome page and onboarding is not complete, redirect them.
-          router.push('/welcome');
+        const onboardingComplete = profile?.onboardingCompleted || false;
+
+        if (onboardingComplete) {
+          // If onboarding is complete, and they somehow landed on welcome, send them to dashboard.
+          if (pathname === '/welcome') {
+            router.push('/');
+          } else {
+            // Otherwise, they are good to go.
+            setProfileLoading(false);
+          }
         } else {
-          // If onboarding is complete, let them access the app.
-          setProfileLoading(false);
+          // If onboarding is not complete, they must be on the welcome page.
+          if (pathname !== '/welcome') {
+            router.push('/welcome');
+          } else {
+            // If they are already on the welcome page, let them be.
+            setProfileLoading(false);
+          }
         }
       })
       .catch(() => {
