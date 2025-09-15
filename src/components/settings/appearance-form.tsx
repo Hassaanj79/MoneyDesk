@@ -28,9 +28,6 @@ export function AppearanceForm() {
 
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
-    defaultValues: {
-      theme: "system",
-    },
   })
   
   useEffect(() => {
@@ -56,12 +53,11 @@ export function AppearanceForm() {
                   Select the theme for the application.
                 </FormDescription>
                 <RadioGroup
-                  onValueChange={(value: "light" | "dark" | "system") => {
-                    field.onChange(value)
-                    setTheme(value)
+                  onValueChange={(value) => {
+                    field.onChange(value as "light" | "dark" | "system")
+                    setTheme(value as "light" | "dark" | "system")
                   }}
-                  value={field.value}
-                  defaultValue={field.value}
+                  value={theme ?? 'system'}
                   className="grid max-w-md grid-cols-1 sm:grid-cols-3 gap-8 pt-2"
                 >
                   <FormItem>
