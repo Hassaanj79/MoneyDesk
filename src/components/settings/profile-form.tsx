@@ -17,7 +17,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Camera, Check, ChevronsUpDown, User, Loader2 } from "lucide-react"
-import { currencies, countries } from "@/lib/constants"
+import { currencies, countries, timezones } from "@/lib/constants"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { cn } from "@/lib/utils"
@@ -37,6 +37,7 @@ const profileFormSchema = z.object({
   country: z.string().optional(),
   photo: z.any().optional(),
   currency: z.string().min(1, "Please select a currency."),
+  timezone: z.string().optional(),
 })
 
 export function ProfileForm() {
@@ -57,6 +58,7 @@ export function ProfileForm() {
       zipcode: "",
       country: "",
       currency: currency,
+      timezone: "",
     },
   });
 
@@ -75,6 +77,7 @@ export function ProfileForm() {
                 zipcode: '',
                 country: '',
                 currency: dbCurrency,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             };
 
             if (profile) {
@@ -87,6 +90,7 @@ export function ProfileForm() {
                     zipcode: profile.zipcode || defaultValues.zipcode,
                     country: profile.country || defaultValues.country,
                     currency: dbCurrency,
+                    timezone: profile.timezone || defaultValues.timezone,
                 });
                 setPhotoPreview(profile.photoURL || user.photoURL || null);
             } else {
@@ -350,69 +354,130 @@ export function ProfileForm() {
                 )}
                 />
         </div>
-        <FormField
-          control={form.control}
-          name="currency"
-          render={({ field }) => (
-            <FormItem className="flex flex-col">
-              <FormLabel>Currency</FormLabel>
-               <Popover>
-                <PopoverTrigger asChild>
-                  <FormControl>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      className={cn(
-                        "w-full justify-between",
-                        !field.value && "text-muted-foreground"
-                      )}
-                    >
-                      {field.value
-                        ? currencies.find(
-                            (c) => c.code === field.value
-                          )?.name
-                        : "Select currency"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </FormControl>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Search currency..." />
-                    <CommandList>
-                      <CommandEmpty>No currency found.</CommandEmpty>
-                      <CommandGroup>
-                        {currencies.map((c) => (
-                          <CommandItem
-                            value={c.name}
-                            key={c.code}
-                            onSelect={() => {
-                              form.setValue("currency", c.code)
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                c.code === field.value
-                                  ? "opacity-100"
-                                  : "opacity-0"
-                              )}
-                            />
-                            {c.name} ({c.code})
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              <FormDescription>
-                This is the currency that will be used for all transactions.
-              </FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="currency"
+            render={({ field }) => (
+                <FormItem className="flex flex-col">
+                <FormLabel>Currency</FormLabel>
+                <Popover>
+                    <PopoverTrigger asChild>
+                    <FormControl>
+                        <Button
+                        variant="outline"
+                        role="combobox"
+                        className={cn(
+                            "w-full justify-between",
+                            !field.value && "text-muted-foreground"
+                        )}
+                        >
+                        {field.value
+                            ? currencies.find(
+                                (c) => c.code === field.value
+                            )?.name
+                            : "Select currency"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                    <Command>
+                        <CommandInput placeholder="Search currency..." />
+                        <CommandList>
+                        <CommandEmpty>No currency found.</CommandEmpty>
+                        <CommandGroup>
+                            {currencies.map((c) => (
+                            <CommandItem
+                                value={c.name}
+                                key={c.code}
+                                onSelect={() => {
+                                form.setValue("currency", c.code)
+                                }}
+                            >
+                                <Check
+                                className={cn(
+                                    "mr-2 h-4 w-4",
+                                    c.code === field.value
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                                />
+                                {c.name} ({c.code})
+                            </CommandItem>
+                            ))}
+                        </CommandGroup>
+                        </CommandList>
+                    </Command>
+                    </PopoverContent>
+                </Popover>
+                <FormDescription>
+                    This is the currency that will be used for all transactions.
+                </FormDescription>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+                control={form.control}
+                name="timezone"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                    <FormLabel>Timezone</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                                "w-full justify-between",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value || "Select timezone"}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Search timezone..." />
+                            <CommandList>
+                            <CommandEmpty>No timezone found.</CommandEmpty>
+                            <CommandGroup>
+                                {timezones.map((tz) => (
+                                <CommandItem
+                                    value={tz}
+                                    key={tz}
+                                    onSelect={() => {
+                                        form.setValue("timezone", tz)
+                                    }}
+                                >
+                                    <Check
+                                    className={cn(
+                                        "mr-2 h-4 w-4",
+                                        tz === field.value
+                                        ? "opacity-100"
+                                        : "opacity-0"
+                                    )}
+                                    />
+                                    {tz}
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            </CommandList>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <FormDescription>
+                        This is the timezone that will be used for all dates.
+                    </FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
         <Button type="submit" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Update Profile
@@ -421,4 +486,6 @@ export function ProfileForm() {
     </Form>
   )
 }
+    
+
     

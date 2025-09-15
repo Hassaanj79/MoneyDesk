@@ -47,8 +47,12 @@ export type UserProfile = {
   country?: string;
   photoURL?: string;
   currency?: string;
+  timezone?: string;
 };
 
     
+
+    
+
 
     
