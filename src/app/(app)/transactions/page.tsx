@@ -29,7 +29,7 @@ import { AddTransactionForm } from "@/components/transactions/add-transaction-fo
 import { EditTransactionForm } from "@/components/transactions/edit-transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { cn } from "@/lib/utils";
-import { PlusCircle, Trash2, Pencil } from "lucide-react";
+import { PlusCircle, Trash2, Pencil, Repeat } from "lucide-react";
 import type { Transaction } from "@/types";
 import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO, format } from "date-fns";
@@ -181,7 +181,24 @@ export default function TransactionsPage() {
                   filteredTransactions.map((transaction) => (
                     <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
                       <TableCell className="font-medium">
-                        {transaction.name}
+                        <div className="flex items-center gap-2">
+                            <span>{transaction.name}</span>
+                            {transaction.isRecurring && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Badge variant="outline" className="flex items-center gap-1 capitalize">
+                                                <Repeat className="h-3 w-3" />
+                                                {transaction.recurrenceFrequency}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>This is a recurring transaction.</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </div>
                       </TableCell>
                       <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
                       <TableCell>
@@ -283,3 +300,5 @@ export default function TransactionsPage() {
     </>
   );
 }
+
+    
