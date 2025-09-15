@@ -377,5 +377,3 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     </Form>
   );
 }
-
-    
