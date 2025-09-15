@@ -66,7 +66,7 @@ export function Header() {
 
   React.useEffect(() => {
     setIsClient(true);
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    const checkMobile = () => setIsMobile(window.innerWidth < 1024); // Changed to lg breakpoint
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
@@ -118,7 +118,7 @@ export function Header() {
                 <Button
                 variant="outline"
                 size="icon"
-                className="shrink-0 md:hidden"
+                className="shrink-0 lg:hidden"
                 >
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle navigation menu</span>
@@ -156,11 +156,11 @@ export function Header() {
                 className="flex items-center gap-2 text-lg font-semibold"
             >
                 <Logo className="h-6 w-6" />
-                <span className="sr-only md:not-sr-only">MoneyDesk</span>
+                <span className="sr-only lg:not-sr-only">MoneyDesk</span>
             </Link>
         </div>
 
-        <nav className="hidden md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6 ml-4">
+        <nav className="hidden lg:flex lg:flex-row lg:items-center lg:gap-5 lg:text-sm lg:ml-4">
            {navItems.map((item) => (
             <Link
               key={item.href}
@@ -177,10 +177,10 @@ export function Header() {
         
 
         <div className="flex w-full items-center gap-1 md:ml-auto md:gap-2 justify-end">
-            <div className="hidden md:block">
+            <div className="hidden lg:block">
                 <DateRangePicker date={date} onDateChange={setDate} />
             </div>
-             <div className="block md:hidden">
+             <div className="block lg:hidden">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" size="icon">
@@ -195,7 +195,7 @@ export function Header() {
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
                 <div className="relative flex-1 md:grow-0 max-w-sm">
-                  <div className={cn('md:hidden', searchVisible ? 'hidden' : 'block')}>
+                  <div className={cn('lg:hidden', searchVisible ? 'hidden' : 'block')}>
                     <Button variant="ghost" size="icon" onClick={() => setSearchVisible(true)}>
                       <Search className="h-5 w-5 text-muted-foreground" />
                     </Button>
@@ -218,7 +218,7 @@ export function Header() {
                         <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full", "md:hidden")}
+                        className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full", "lg:hidden")}
                         onClick={() => {
                           clearSearch();
                           setSearchVisible(false)
@@ -326,7 +326,7 @@ export function Header() {
             </DropdownMenu>
 
         </div>
-        <RecapStory open={recapOpen} onOpenchange={setRecapOpen} />
+        <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
     </header>
   );
 
