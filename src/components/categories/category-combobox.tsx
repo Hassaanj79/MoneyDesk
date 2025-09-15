@@ -48,12 +48,8 @@ export function CategoryCombobox({
   const handleCreateCategory = () => {
     if (query) {
         onCategoryCreated(query)
-        // Find the new category to set the value. A bit of a hack.
-        const newCategory = categories.find(c => c.name.toLowerCase() === query.toLowerCase());
-        if(newCategory) {
-            onChange(newCategory.id);
-        }
         setOpen(false)
+        setQuery("")
     }
   }
 
@@ -96,6 +92,7 @@ export function CategoryCombobox({
                   onSelect={(currentValue) => {
                     onChange(currentValue)
                     setOpen(false)
+                    setQuery("")
                   }}
                 >
                   <Check
@@ -120,3 +117,5 @@ export function CategoryCombobox({
     </Popover>
   )
 }
+
+    

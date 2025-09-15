@@ -41,6 +41,7 @@ import { useCategories } from "@/contexts/category-context";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { CameraCapture } from "./camera-capture";
 import Image from "next/image";
+import { CategoryCombobox } from "../categories/category-combobox";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -64,7 +65,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
-  const { categories } = useCategories();
+  const { categories, addCategory } = useCategories();
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   
@@ -120,6 +121,13 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     form.setValue("receipt", photoDataUrl);
     setCameraOpen(false);
   }
+
+  const handleCategoryCreated = async (name: string) => {
+    const newCategoryId = await addCategory({ name, type });
+    if (newCategoryId) {
+      form.setValue('categoryId', newCategoryId);
+    }
+  };
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
@@ -225,20 +233,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <CategoryCombobox
+                    categories={filteredCategories}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onCategoryCreated={handleCategoryCreated}
+                />
               <FormMessage />
             </FormItem>
           )}
@@ -372,3 +372,5 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     </Form>
   );
 }
+
+    
