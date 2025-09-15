@@ -19,30 +19,33 @@ export default function AuthenticatedLayout({
   const [profileLoading, setProfileLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
 
     if (!user) {
       router.push('/login');
       return;
     }
-    
-    // For the welcome page, we don't need to check for onboarding status.
-    if (pathname === '/welcome') {
-      setProfileLoading(false);
-      return;
-    }
 
-    getUserProfile(user.uid).then(profile => {
-      if (!profile?.onboardingCompleted) {
-        router.push('/welcome');
-      } else {
+    // After auth is loaded and we have a user, check their profile.
+    getUserProfile(user.uid)
+      .then((profile) => {
+        if (pathname === '/welcome') {
+          // If they are on the welcome page, let them be.
+          setProfileLoading(false);
+        } else if (!profile?.onboardingCompleted) {
+          // If not on welcome page and onboarding is not complete, redirect them.
+          router.push('/welcome');
+        } else {
+          // If onboarding is complete, let them access the app.
+          setProfileLoading(false);
+        }
+      })
+      .catch(() => {
+        // In case of error, default to allowing access to prevent being stuck.
         setProfileLoading(false);
-      }
-    }).catch(() => {
-      // If there's an error, still allow access to avoid blocking user.
-      setProfileLoading(false);
-    });
-
+      });
   }, [user, loading, router, pathname]);
 
   if (loading || profileLoading) {
