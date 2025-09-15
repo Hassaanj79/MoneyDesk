@@ -26,7 +26,7 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, cla
         <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">{title}</CardTitle>
         <Icon className={cn("h-5 w-5 text-muted-foreground", iconClassName)} aria-hidden="true" />
       </CardHeader>
-      <CardContent>
+      <CardContent className="flex-1">
         <div className={cn("font-semibold tracking-tight", isDateRange ? "text-base" : "text-3xl", className)}>{amount}</div>
         {change && (
           <p className={cn(
