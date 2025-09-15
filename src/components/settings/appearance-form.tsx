@@ -122,7 +122,7 @@ export function AppearanceForm() {
                         <RadioGroupItem value="system" className="sr-only" />
                       </FormControl>
                       <div className="items-center rounded-md border-2 border-muted p-1 hover:border-accent">
-                        <div className="flex items-center justify-center h-[116px] bg-muted/50 rounded-sm">
+                        <div className="flex items-center justify-center h-[116px] rounded-sm">
                             <Computer className="h-10 w-10 text-muted-foreground" />
                         </div>
                       </div>
