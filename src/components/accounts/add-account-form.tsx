@@ -22,6 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useAccounts } from "@/contexts/account-context";
+import type { Account } from "@/types";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -30,7 +31,7 @@ const formSchema = z.object({
 });
 
 type AddAccountFormProps = {
-  onSuccess: (accountName: string) => void;
+  onSuccess: (accountName: string, values: Omit<Account, 'id' | 'userId' | 'balance'>) => void;
 };
 
 export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
@@ -45,8 +46,13 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await addAccount(values);
-    onSuccess(values.name);
+    // We call addAccount from the context if it's used in the Accounts page,
+    // but we let the parent component handle creation if it's in the combobox.
+    if (onSuccess) {
+      onSuccess(values.name, values);
+    } else {
+      await addAccount(values);
+    }
     form.reset();
   }
 

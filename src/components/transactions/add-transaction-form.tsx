@@ -31,7 +31,7 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X } from "lucide-react";
 import { format } from "date-fns";
-import type { Category } from "@/types";
+import type { Category, Account } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
@@ -42,6 +42,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CameraCapture } from "./camera-capture";
 import Image from "next/image";
 import { CategoryCombobox } from "../categories/category-combobox";
+import { AccountCombobox } from "../accounts/account-combobox";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -64,7 +65,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { addTransaction } = useTransactions();
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
-  const { accounts } = useAccounts();
+  const { accounts, addAccount } = useAccounts();
   const { categories, addCategory } = useCategories();
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -127,6 +128,14 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     if (newCategoryId) {
       form.setValue('categoryId', newCategoryId);
     }
+  };
+
+  const handleAccountCreated = async (account: Omit<Account, 'id' | 'userId' | 'balance'>) => {
+    const newAccountId = await addAccount(account);
+    if (newAccountId) {
+      form.setValue('accountId', newAccountId);
+    }
+    return { ...account, id: newAccountId || '', userId: '', balance: account.initialBalance };
   };
 
   const filteredCategories = categories.filter((c) => c.type === type);
@@ -207,20 +216,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             render={({ field }) => (
               <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an account" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {accounts.map((acc) => (
-                      <SelectItem key={acc.id} value={acc.id}>
-                        {acc.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <AccountCombobox
+                  accounts={accounts}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onAccountCreated={handleAccountCreated}
+                />
                 <FormMessage />
               </FormItem>
             )}
@@ -372,5 +373,3 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     </Form>
   );
 }
-
-    
