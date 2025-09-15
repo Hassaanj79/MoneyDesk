@@ -331,7 +331,7 @@ export function WelcomeForm() {
             </div>
             <Button type="submit" disabled={loading} className="w-full">
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Continue to Dashboard
+                Continue to Money Desk
             </Button>
         </form>
         </Form>
