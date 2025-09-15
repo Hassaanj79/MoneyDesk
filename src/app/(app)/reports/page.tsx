@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
+import { cn } from "@/lib/utils";
 
 const generatedReports: any[] = [];
 
@@ -266,7 +267,7 @@ export default function ReportsPage() {
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(netSavings)}</div>
+                <div className={cn("text-2xl font-bold", netSavings > 0 ? "text-green-500" : netSavings < 0 ? "text-red-500" : "")}>{formatCurrency(netSavings)}</div>
               </CardContent>
             </Card>
           </div>
@@ -286,7 +287,7 @@ export default function ReportsPage() {
               <BarChart
                 accessibilityLayer
                 data={spendingData}
-                margin={{ top: 20, right: 20, left: -10, bottom: 5 }}
+                margin={{ top: 20, right: 20, left: 20, bottom: 5 }}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
