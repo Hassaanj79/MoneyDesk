@@ -107,7 +107,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     await addTransaction({
       ...transactionData,
       date: format(values.date, "yyyy-MM-dd"),
-      receipt: values.receipt || null,
     });
 
     addNotification({
