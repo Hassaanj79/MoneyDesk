@@ -246,7 +246,7 @@ export default function ReportsPage() {
                 <ArrowDown className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">{formatCurrency(totalIncome)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -257,7 +257,7 @@ export default function ReportsPage() {
                 <ArrowUp className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-500">{formatCurrency(totalExpense)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card>
