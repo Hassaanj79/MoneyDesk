@@ -86,7 +86,7 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[260px] justify-start text-left font-normal",
+              "w-full md:w-[260px] justify-start text-left font-normal",
               !date && "text-muted-foreground"
             )}
           >
