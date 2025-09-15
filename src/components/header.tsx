@@ -60,6 +60,7 @@ export function Header() {
   const [isClient, setIsClient] = React.useState(false);
   const { transactions } = useTransactions();
   const { user, logout } = useAuth();
+  const [searchVisible, setSearchVisible] = React.useState(false);
 
 
   React.useEffect(() => {
@@ -163,36 +164,46 @@ export function Header() {
           </SheetContent>
         </Sheet>
 
-        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2">
-            <div className="ml-auto flex-1 sm:flex-initial">
+        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 justify-end">
+            <div className="hidden sm:block">
                 <DateRangePicker date={date} onDateChange={setDate} />
             </div>
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
                 <div className="relative flex-1 md:grow-0 max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                    type="search"
-                    placeholder="Search transactions..."
-                    className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onFocus={() => {
-                    if (searchQuery && searchResults.length > 0) {
-                        setSearchPopoverOpen(true);
-                    }
-                    }}
-                />
-                {searchQuery && (
-                    <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full"
-                    onClick={clearSearch}
-                    >
-                    <X className="h-4 w-4" />
+                  <div className={cn("lg:hidden", searchVisible ? 'hidden': 'block')}>
+                    <Button variant="ghost" size="icon" onClick={() => setSearchVisible(true)}>
+                      <Search className="h-5 w-5 text-muted-foreground" />
                     </Button>
-                )}
+                  </div>
+                  <div className={cn("relative", searchVisible ? 'block' : 'hidden', 'lg:block')}>
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Search transactions..."
+                        className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => {
+                        if (searchQuery && searchResults.length > 0) {
+                            setSearchPopoverOpen(true);
+                        }
+                        }}
+                    />
+                    {(searchQuery || searchVisible) && (
+                        <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full lg:hidden"
+                        onClick={() => {
+                          clearSearch();
+                          setSearchVisible(false)
+                        }}
+                        >
+                        <X className="h-4 w-4" />
+                        </Button>
+                    )}
+                  </div>
                 </div>
             </PopoverTrigger>
             <PopoverContent align="start" className="w-[320px] md:w-[400px] lg:w-[500px]">
@@ -307,3 +318,5 @@ export function Header() {
 
   return <TooltipProvider>{content}</TooltipProvider>;
 }
+
+    
