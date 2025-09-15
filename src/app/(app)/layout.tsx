@@ -26,6 +26,7 @@ export default function AuthenticatedLayout({
       return;
     }
     
+    // For the welcome page, we don't need to check for onboarding status.
     if (pathname === '/welcome') {
       setProfileLoading(false);
       return;
@@ -38,6 +39,7 @@ export default function AuthenticatedLayout({
         setProfileLoading(false);
       }
     }).catch(() => {
+      // If there's an error, still allow access to avoid blocking user.
       setProfileLoading(false);
     });
 
@@ -47,6 +49,15 @@ export default function AuthenticatedLayout({
     return (
       <div className="flex min-h-screen w-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  // Render welcome page without the main app layout
+  if (pathname === '/welcome') {
+    return (
+      <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
+        {children}
       </div>
     );
   }
