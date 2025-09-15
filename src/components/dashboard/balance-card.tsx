@@ -20,6 +20,8 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, cla
   const isNegative = change?.startsWith("-");
   const isDateRange = title === 'Date Range';
 
+  const isExpense = title === 'Expense';
+
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -31,8 +33,7 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, cla
         {change ? (
           <p className={cn(
             "text-xs font-medium",
-            isPositive && "text-red-700 dark:text-red-400",
-            isNegative && "text-green-700 dark:text-green-400",
+            isExpense ? (isPositive ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400") : (isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"),
             !isPositive && !isNegative && "text-muted-foreground",
             isDateRange ? "whitespace-nowrap" : ""
           )}>
