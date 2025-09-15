@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/form"
 import { useTheme } from "next-themes"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useEffect } from "react"
+import { Computer } from "lucide-react"
 
 const appearanceFormSchema = z.object({
-  theme: z.enum(["light", "dark"], {
+  theme: z.enum(["light", "dark", "system"], {
     required_error: "Please select a theme.",
   }),
 })
@@ -27,12 +29,17 @@ export function AppearanceForm() {
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues: {
-      theme: "light",
+      theme: theme as "light" | "dark" | "system" | undefined,
     },
   })
+  
+  useEffect(() => {
+    form.setValue("theme", theme as "light" | "dark" | "system");
+  }, [theme, form]);
+
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl">
       <h3 className="text-lg font-medium">Appearance</h3>
       <p className="text-sm text-muted-foreground mb-6">
         Customize the look and feel of the application.
@@ -54,7 +61,8 @@ export function AppearanceForm() {
                     setTheme(value)
                   }}
                   defaultValue={field.value}
-                  className="grid max-w-md grid-cols-1 sm:grid-cols-2 gap-8 pt-2"
+                  value={field.value}
+                  className="grid max-w-md grid-cols-1 sm:grid-cols-3 gap-8 pt-2"
                 >
                   <FormItem>
                     <FormLabel className="[&:has([data-state=checked])>div]:border-primary">
@@ -105,6 +113,21 @@ export function AppearanceForm() {
                       </div>
                       <span className="block w-full p-2 text-center font-normal">
                         Dark
+                      </span>
+                    </FormLabel>
+                  </FormItem>
+                   <FormItem>
+                    <FormLabel className="[&:has([data-state=checked])>div]:border-primary">
+                      <FormControl>
+                        <RadioGroupItem value="system" className="sr-only" />
+                      </FormControl>
+                      <div className="items-center rounded-md border-2 border-muted p-1 hover:border-accent">
+                        <div className="flex items-center justify-center h-[116px] bg-muted/50 rounded-sm">
+                            <Computer className="h-10 w-10 text-muted-foreground" />
+                        </div>
+                      </div>
+                      <span className="block w-full p-2 text-center font-normal">
+                        System
                       </span>
                     </FormLabel>
                   </FormItem>
