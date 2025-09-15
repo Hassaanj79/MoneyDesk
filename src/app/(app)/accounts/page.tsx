@@ -119,7 +119,7 @@ export default function AccountsPage() {
               </CardDescription>
             </div>
             <DialogTrigger asChild>
-              <Button className="ml-auto gap-1">
+              <Button className="ml-auto gap-1" onClick={() => setAddDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4" />
                 Add Account
               </Button>
