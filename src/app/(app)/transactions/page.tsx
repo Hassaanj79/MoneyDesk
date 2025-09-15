@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { PlusCircle, Trash2, Pencil, Repeat } from "lucide-react";
 import type { Transaction } from "@/types";
 import { useDateRange } from "@/contexts/date-range-context";
-import { isWithinInterval, parseISO, format } from "date-fns";
+import { isWithinInterval, parseISO, format, addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -48,6 +48,49 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useCurrency } from "@/hooks/use-currency";
 import { useCategories } from "@/contexts/category-context";
+
+const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
+    if (!transaction.isRecurring || !transaction.recurrenceFrequency) {
+        return null;
+    }
+
+    const startDate = parseISO(transaction.date);
+    const now = new Date();
+    let nextDate = startDate;
+
+    const incrementDate = (date: Date): Date => {
+        switch (transaction.recurrenceFrequency) {
+            case 'daily':
+                return addDays(date, 1);
+            case 'weekly':
+                return addWeeks(date, 1);
+            case 'monthly':
+                return addMonths(date, 1);
+            case 'yearly':
+                return addYears(date, 1);
+            default:
+                return addDays(date, 1);
+        }
+    };
+    
+    while (nextDate < now) {
+        nextDate = incrementDate(nextDate);
+    }
+    
+    let previousDate = startDate;
+    while(previousDate < now) {
+        const temp = incrementDate(previousDate);
+        if (temp > now) {
+            break;
+        }
+        previousDate = temp;
+    }
+    
+    nextDate = incrementDate(previousDate);
+
+    return nextDate;
+};
+
 
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useTransactions();
@@ -173,12 +216,15 @@ export default function TransactionsPage() {
                   <TableHead>Transaction</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead>Category</TableHead>
+                  <TableHead>Due Date</TableHead>
                   <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => (
+                  filteredTransactions.map((transaction) => {
+                    const nextDueDate = getNextRecurrenceDate(transaction);
+                    return (
                     <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
@@ -204,6 +250,9 @@ export default function TransactionsPage() {
                       <TableCell>
                         <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
                       </TableCell>
+                      <TableCell>
+                        {nextDueDate ? format(nextDueDate, 'PPP') : '-'}
+                      </TableCell>
                       <TableCell
                         className={cn(
                           "text-right",
@@ -216,11 +265,11 @@ export default function TransactionsPage() {
                         {formatCurrency(transaction.amount)}
                       </TableCell>
                     </TableRow>
-                  ))
+                  )})
                 ) : (
                   <TableRow>
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="h-24 text-center"
                     >
                       No transactions found for the selected filters.
