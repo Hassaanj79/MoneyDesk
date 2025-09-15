@@ -46,9 +46,10 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    await addAccount(values);
     if (onSuccess) {
       onSuccess(values.name, values);
+    } else {
+      await addAccount(values);
     }
     form.reset();
   }
