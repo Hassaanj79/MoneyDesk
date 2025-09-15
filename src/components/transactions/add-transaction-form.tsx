@@ -80,6 +80,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       categoryId: "",
       name: "",
       isRecurring: false,
+      receipt: null,
     },
   });
 
@@ -92,6 +93,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
       categoryId: "",
       name: "",
       isRecurring: false,
+      receipt: null,
     });
   }, [type, form]);
   
@@ -100,12 +102,12 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const receiptPreview = form.watch("receipt");
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    const { receipt, ...transactionData } = values;
+    const { ...transactionData } = values;
 
     await addTransaction({
       ...transactionData,
       date: format(values.date, "yyyy-MM-dd"),
-      receipt: receiptPreview
+      receipt: values.receipt || null,
     });
 
     addNotification({
