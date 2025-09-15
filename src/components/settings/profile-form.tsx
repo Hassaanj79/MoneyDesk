@@ -64,6 +64,8 @@ export function ProfileForm() {
     if (user) {
         setLoading(true);
         getUserProfile(user.uid).then(profile => {
+            const dbCurrency = profile?.currency || currency;
+
             const defaultValues = {
                 name: user.displayName || '',
                 email: user.email || '',
@@ -72,7 +74,7 @@ export function ProfileForm() {
                 state: '',
                 zipcode: '',
                 country: '',
-                currency: currency,
+                currency: dbCurrency,
             };
 
             if (profile) {
@@ -84,16 +86,23 @@ export function ProfileForm() {
                     state: profile.state || defaultValues.state,
                     zipcode: profile.zipcode || defaultValues.zipcode,
                     country: profile.country || defaultValues.country,
-                    currency: profile.currency || defaultValues.currency,
+                    currency: dbCurrency,
                 });
                 setPhotoPreview(profile.photoURL || user.photoURL || null);
             } else {
                  form.reset(defaultValues);
                 setPhotoPreview(user.photoURL || null);
             }
+             if (dbCurrency !== currency) {
+                setCurrency(dbCurrency);
+            }
         }).finally(() => setLoading(false));
     }
-  }, [user, currency, form]);
+  }, [user, form]);
+
+  useEffect(() => {
+    form.setValue('currency', currency);
+  }, [currency, form]);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -360,7 +369,7 @@ export function ProfileForm() {
                     >
                       {field.value
                         ? currencies.find(
-                            (currency) => currency.code === field.value
+                            (c) => c.code === field.value
                           )?.name
                         : "Select currency"}
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -373,23 +382,23 @@ export function ProfileForm() {
                     <CommandList>
                       <CommandEmpty>No currency found.</CommandEmpty>
                       <CommandGroup>
-                        {currencies.map((currency) => (
+                        {currencies.map((c) => (
                           <CommandItem
-                            value={currency.name}
-                            key={currency.code}
+                            value={c.name}
+                            key={c.code}
                             onSelect={() => {
-                              form.setValue("currency", currency.code)
+                              form.setValue("currency", c.code)
                             }}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                currency.code === field.value
+                                c.code === field.value
                                   ? "opacity-100"
                                   : "opacity-0"
                               )}
                             />
-                            {currency.name} ({currency.code})
+                            {c.name} ({c.code})
                           </CommandItem>
                         ))}
                       </CommandGroup>

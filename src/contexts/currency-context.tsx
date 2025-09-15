@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useState, ReactNode, useMemo } from 'react';
+import React, { createContext, useState, ReactNode, useMemo, useEffect } from 'react';
 
 interface CurrencyContextType {
   currency: string;
@@ -12,7 +12,19 @@ interface CurrencyContextType {
 const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
 
 export const CurrencyProvider = ({ children }: { children: ReactNode }) => {
-  const [currency, setCurrency] = useState<string>('USD');
+  const [currency, setCurrencyState] = useState<string>('USD');
+
+  useEffect(() => {
+    const storedCurrency = localStorage.getItem('app-currency');
+    if (storedCurrency) {
+      setCurrencyState(storedCurrency);
+    }
+  }, []);
+
+  const setCurrency = (newCurrency: string) => {
+    setCurrencyState(newCurrency);
+    localStorage.setItem('app-currency', newCurrency);
+  }
 
   const formatCurrency = useMemo(() => (value: number, options: Intl.NumberFormatOptions = {}) => {
     return new Intl.NumberFormat('en-US', {
