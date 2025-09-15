@@ -48,6 +48,7 @@ export type UserProfile = {
   photoURL?: string;
   currency?: string;
   timezone?: string;
+  onboardingCompleted?: boolean;
 };
 
     
