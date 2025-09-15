@@ -24,15 +24,15 @@ const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, cla
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">{title}</CardTitle>
-        <Icon className={cn("h-5 w-5 text-muted-foreground", iconClassName)} aria-hidden="true" />
+        <Icon className={cn("h-5 w-5", iconClassName)} aria-hidden="true" />
       </CardHeader>
       <CardContent className="flex-1">
         <div className={cn("font-semibold tracking-tight text-3xl", className)}>{amount}</div>
         {change ? (
           <p className={cn(
             "text-xs font-medium",
-            isPositive && "text-green-700 dark:text-green-400",
-            isNegative && "text-red-700 dark:text-red-400",
+            isPositive && "text-red-700 dark:text-red-400",
+            isNegative && "text-green-700 dark:text-green-400",
             !isPositive && !isNegative && "text-muted-foreground",
             isDateRange ? "whitespace-nowrap" : ""
           )}>
