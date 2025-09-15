@@ -5,7 +5,7 @@ import { getFirestore, connectFirestoreEmulator } from "firebase/firestore";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyC5V3V8P3R3c2J6b0F5B4k2N1C7X2e9v9I",
+  apiKey: "AIzaSyApRM4MIHiZCRgoLxGkRI-6nnlmvAO_9CA",
   authDomain: "moneydesk-8f431.firebaseapp.com",
   projectId: "moneydesk-8f431",
   storageBucket: "moneydesk-8f431.appspot.com",
