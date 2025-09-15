@@ -159,7 +159,12 @@ export function ProfileForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-2xl">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+        <h3 className="text-lg font-medium">Profile</h3>
+        <p className="text-sm text-muted-foreground -mt-4">
+            This is how others will see you on the site.
+        </p>
+
         <FormField
           control={form.control}
           name="photo"

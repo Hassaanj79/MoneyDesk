@@ -103,6 +103,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     await addTransaction({
       ...transactionData,
       date: format(values.date, "yyyy-MM-dd"),
+      receipt: receiptPreview
     });
 
     addNotification({
@@ -152,7 +153,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <FormField
             control={form.control}
             name="date"
@@ -299,7 +300,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                 <FormItem>
                     <FormLabel>Receipt</FormLabel>
                     <FormControl>
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
                                 <Upload className="mr-2 h-4 w-4" />
                                 Upload Image
@@ -338,7 +339,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                         </div>
                     </FormControl>
                      {receiptPreview && (
-                        <div className="mt-4 relative w-48 h-48">
+                        <div className="mt-4 relative w-full h-48 sm:w-48">
                             <Image
                                 src={receiptPreview}
                                 alt="Receipt preview"

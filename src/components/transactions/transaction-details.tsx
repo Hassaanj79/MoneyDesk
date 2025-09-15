@@ -8,6 +8,7 @@ import { format, parseISO } from "date-fns";
 import { useCurrency } from "@/hooks/use-currency";
 import { useAccounts } from "@/contexts/account-context";
 import { useCategories } from "@/contexts/category-context";
+import Image from "next/image";
 
 type TransactionDetailsProps = {
   transaction: Transaction;
@@ -15,7 +16,7 @@ type TransactionDetailsProps = {
 };
 
 export function TransactionDetails({ transaction, children }: TransactionDetailsProps) {
-  const { name, amount, type, date, categoryId, accountId } = transaction;
+  const { name, amount, type, date, categoryId, accountId, receipt } = transaction;
   const { formatCurrency } = useCurrency();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
@@ -26,11 +27,11 @@ export function TransactionDetails({ transaction, children }: TransactionDetails
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center border-b pb-2">
-        <h2 className="text-xl font-semibold">{name}</h2>
+      <div className="flex justify-between items-start border-b pb-2">
+        <h2 className="text-xl font-semibold break-words mr-4">{name}</h2>
         <div
           className={cn(
-            "text-xl font-bold",
+            "text-xl font-bold text-right",
             type === "income" ? "text-green-500" : "text-red-500"
           )}
         >
@@ -58,6 +59,21 @@ export function TransactionDetails({ transaction, children }: TransactionDetails
           <p className="capitalize">{type}</p>
         </div>
       </div>
+
+       {receipt && (
+        <div>
+          <p className="text-sm text-muted-foreground mb-2">Receipt</p>
+          <div className="relative w-full h-64 rounded-md overflow-hidden border">
+            <Image
+                src={receipt}
+                alt="Receipt"
+                layout="fill"
+                objectFit="contain"
+            />
+          </div>
+        </div>
+      )}
+
       {children}
     </div>
   );

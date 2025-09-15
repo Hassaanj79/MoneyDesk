@@ -19,6 +19,7 @@ import {
   Menu,
   LogOut,
   User as UserIcon,
+  CalendarIcon,
 } from "lucide-react";
 import { Logo } from "@/components/icons/logo";
 import { DateRangePicker } from "@/components/date-range-picker";
@@ -29,7 +30,6 @@ import type { Transaction } from "@/types";
 import { cn } from "@/lib/utils";
 import { RecapStory } from "@/components/dashboard/recap-story";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { useNotifications } from "@/hooks/use-notifications";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -55,16 +55,21 @@ export function Header() {
   const [isSearching, setIsSearching] = React.useState(false);
   const [searchPopoverOpen, setSearchPopoverOpen] = React.useState(false);
   const [recapOpen, setRecapOpen] = React.useState(false);
-  const isMobile = useIsMobile();
   const { notifications } = useNotifications();
   const [isClient, setIsClient] = React.useState(false);
   const { transactions } = useTransactions();
   const { user, logout } = useAuth();
   const [searchVisible, setSearchVisible] = React.useState(false);
+  const [isMobile, setIsMobile] = React.useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
 
 
   React.useEffect(() => {
     setIsClient(true);
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
 
@@ -107,14 +112,55 @@ export function Header() {
   
   const HeaderContent = (
      <header className="sticky top-0 flex h-16 items-center gap-2 border-b bg-background px-4 md:px-6 z-40">
-        <nav className="hidden flex-col gap-6 text-lg font-medium md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-lg font-semibold md:text-base"
-          >
-            <Logo className="h-6 w-6" />
-            <span className="sr-only md:not-sr-only">MoneyDesk</span>
-          </Link>
+        <div className="flex items-center gap-2">
+            <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
+            <SheetTrigger asChild>
+                <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0 md:hidden"
+                >
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">Toggle navigation menu</span>
+                </Button>
+            </SheetTrigger>
+            <SheetContent side="left">
+                <nav className="grid gap-6 text-lg font-medium">
+                <Link
+                    href="#"
+                    className="flex items-center gap-2 text-lg font-semibold"
+                    onClick={() => setMobileNavOpen(false)}
+                >
+                    <Logo className="h-6 w-6" />
+                    <span className="">MoneyDesk</span>
+                </Link>
+                {navItems.map((item) => (
+                    <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={() => setMobileNavOpen(false)}
+                        className={cn(
+                            "transition-colors hover:text-foreground flex items-center gap-4",
+                            pathname === item.href ? "text-foreground" : "text-muted-foreground"
+                        )}
+                        >
+                        <item.icon className="h-5 w-5" />
+                        {item.label}
+                    </Link>
+                ))}
+                </nav>
+            </SheetContent>
+            </Sheet>
+            <Link
+                href="/"
+                className="flex items-center gap-2 text-lg font-semibold"
+            >
+                <Logo className="h-6 w-6" />
+                <span className="sr-only md:not-sr-only">MoneyDesk</span>
+            </Link>
+        </div>
+
+        <nav className="hidden md:flex md:flex-row md:items-center md:gap-5 md:text-sm lg:gap-6 ml-4">
            {navItems.map((item) => (
             <Link
               key={item.href}
@@ -128,59 +174,37 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <Sheet>
-          <SheetTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="shrink-0 md:hidden"
-            >
-              <Menu className="h-5 w-5" />
-              <span className="sr-only">Toggle navigation menu</span>
-            </Button>
-          </SheetTrigger>
-          <SheetContent side="left">
-            <nav className="grid gap-6 text-lg font-medium">
-              <Link
-                href="#"
-                className="flex items-center gap-2 text-lg font-semibold"
-              >
-                <Logo className="h-6 w-6" />
-                <span className="">MoneyDesk</span>
-              </Link>
-               {navItems.map((item) => (
-                <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                        "transition-colors hover:text-foreground",
-                        pathname === item.href ? "text-foreground" : "text-muted-foreground"
-                    )}
-                    >
-                    {item.label}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
+        
 
-        <div className="flex w-full items-center gap-2 md:ml-auto md:gap-2 justify-end">
-            <div className="hidden sm:block">
+        <div className="flex w-full items-center gap-1 md:ml-auto md:gap-2 justify-end">
+            <div className={cn("hidden", isMobile ? "sm:hidden" : "sm:block")}>
                 <DateRangePicker date={date} onDateChange={setDate} />
+            </div>
+             <div className={cn(isMobile ? "sm:block" : "hidden")}>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" size="icon">
+                            <CalendarIcon className="h-4 w-4" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                         <DateRangePicker date={date} onDateChange={setDate} />
+                    </PopoverContent>
+                </Popover>
             </div>
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
                 <div className="relative flex-1 md:grow-0 max-w-sm">
-                  <div className={cn("lg:hidden", searchVisible ? 'hidden': 'block')}>
+                  <div className={cn(isMobile ? 'block' : 'hidden', searchVisible ? 'hidden' : 'block')}>
                     <Button variant="ghost" size="icon" onClick={() => setSearchVisible(true)}>
                       <Search className="h-5 w-5 text-muted-foreground" />
                     </Button>
                   </div>
-                  <div className={cn("relative", searchVisible ? 'block' : 'hidden', 'lg:block')}>
+                  <div className={cn("relative", searchVisible || !isMobile ? 'block' : 'hidden')}>
                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                     <Input
                         type="search"
-                        placeholder="Search transactions..."
+                        placeholder="Search..."
                         className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[300px]"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
@@ -194,7 +218,7 @@ export function Header() {
                         <Button
                         variant="ghost"
                         size="icon"
-                        className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full lg:hidden"
+                        className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full", isMobile ? "block": "hidden")}
                         onClick={() => {
                           clearSearch();
                           setSearchVisible(false)
@@ -206,7 +230,7 @@ export function Header() {
                   </div>
                 </div>
             </PopoverTrigger>
-            <PopoverContent align="start" className="w-[320px] md:w-[400px] lg:w-[500px]">
+            <PopoverContent align="start" className="w-[--radix-popover-trigger-width]">
                 {isSearching ? (
                 <div className="flex items-center justify-center p-4">
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -292,11 +316,11 @@ export function Header() {
                 <DropdownMenuSeparator />
                 <Link href="/settings">
                   <DropdownMenuItem className="cursor-pointer">
-                      <Settings className="mr-2" /> Settings
+                      <Settings className="mr-2 h-4 w-4" /> Settings
                   </DropdownMenuItem>
                 </Link>
                 <DropdownMenuItem onClick={logout} className="cursor-pointer text-destructive focus:text-destructive">
-                  <LogOut className="mr-2" /> Logout
+                  <LogOut className="mr-2 h-4 w-4" /> Logout
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -307,7 +331,7 @@ export function Header() {
   );
 
   if (!isClient) {
-    return <>{HeaderContent}</>;
+    return <div className="h-16" />;
   }
   
   const content = <>{HeaderContent}</>

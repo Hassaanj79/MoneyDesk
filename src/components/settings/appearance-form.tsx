@@ -22,7 +22,7 @@ const appearanceFormSchema = z.object({
 })
 
 export function AppearanceForm() {
-  const { setTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
 
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
@@ -54,7 +54,7 @@ export function AppearanceForm() {
                     setTheme(value)
                   }}
                   defaultValue={field.value}
-                  className="grid max-w-md grid-cols-2 gap-8 pt-2"
+                  className="grid max-w-md grid-cols-1 sm:grid-cols-2 gap-8 pt-2"
                 >
                   <FormItem>
                     <FormLabel className="[&:has([data-state=checked])>div]:border-primary">

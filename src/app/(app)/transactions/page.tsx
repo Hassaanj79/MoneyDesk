@@ -177,7 +177,7 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden md:inline">Add Income</span>
+                      <span className="sm:inline hidden md:inline">Income</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -193,7 +193,7 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden md:inline">Add Expense</span>
+                      <span className="sm:inline hidden md:inline">Expense</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -205,79 +205,81 @@ export default function TransactionsPage() {
         </CardHeader>
         <CardContent>
           <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
-            <TabsList className="mb-4">
+            <TabsList className="mb-4 grid w-full grid-cols-3">
               <TabsTrigger value="all">All</TabsTrigger>
               <TabsTrigger value="income">Income</TabsTrigger>
               <TabsTrigger value="expense">Expense</TabsTrigger>
             </TabsList>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Transaction</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransactions.length > 0 ? (
-                  filteredTransactions.map((transaction) => {
-                    const nextDueDate = getNextRecurrenceDate(transaction);
-                    return (
-                    <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                            <span>{transaction.name}</span>
-                            {transaction.isRecurring && (
+            <div className="overflow-x-auto">
+                <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Transaction</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="hidden md:table-cell">Due Date</TableHead>
+                    <TableHead className="text-right">Amount</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction) => {
+                        const nextDueDate = getNextRecurrenceDate(transaction);
+                        return (
+                        <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
+                        <TableCell>
+                            <div className="font-medium">{transaction.name}</div>
+                            <div className="text-sm text-muted-foreground md:hidden">
+                                {getCategoryName(transaction.categoryId)}
+                            </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
+                             {transaction.isRecurring && (
                                 <TooltipProvider>
                                     <Tooltip>
                                         <TooltipTrigger>
-                                            <Badge variant="outline" className="flex items-center gap-1 capitalize">
+                                            <Badge variant="outline" className="flex items-center gap-1 capitalize ml-2">
                                                 <Repeat className="h-3 w-3" />
-                                                {transaction.recurrenceFrequency}
                                             </Badge>
                                         </TooltipTrigger>
                                         <TooltipContent>
-                                            <p>This is a recurring transaction.</p>
+                                            <p>Recurring: {transaction.recurrenceFrequency}</p>
                                         </TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             )}
-                        </div>
-                      </TableCell>
-                      <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        {nextDueDate ? format(nextDueDate, 'PPP') : '-'}
-                      </TableCell>
-                      <TableCell
-                        className={cn(
-                          "text-right",
-                          transaction.type === "income"
-                            ? "text-green-500"
-                            : "text-red-500"
-                        )}
-                      >
-                        {transaction.type === "expense" ? "-" : "+"}
-                        {formatCurrency(transaction.amount)}
-                      </TableCell>
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            {nextDueDate ? format(nextDueDate, 'PPP') : '-'}
+                        </TableCell>
+                        <TableCell
+                            className={cn(
+                            "text-right",
+                            transaction.type === "income"
+                                ? "text-green-500"
+                                : "text-red-500"
+                            )}
+                        >
+                            {transaction.type === "expense" ? "-" : "+"}
+                            {formatCurrency(transaction.amount)}
+                        </TableCell>
+                        </TableRow>
+                    )})
+                    ) : (
+                    <TableRow>
+                        <TableCell
+                        colSpan={5}
+                        className="h-24 text-center"
+                        >
+                        No transactions found for the selected filters.
+                        </TableCell>
                     </TableRow>
-                  )})
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="h-24 text-center"
-                    >
-                      No transactions found for the selected filters.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                    )}
+                </TableBody>
+                </Table>
+            </div>
           </Tabs>
         </CardContent>
       </Card>

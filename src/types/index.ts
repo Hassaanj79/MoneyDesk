@@ -10,6 +10,7 @@ export type Transaction = {
   accountId: string;
   isRecurring?: boolean;
   recurrenceFrequency?: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  receipt?: string;
 };
 
 export type Budget = {
