@@ -13,11 +13,11 @@ import { useTransactions } from "@/contexts/transaction-context";
 const chartConfig = {
   income: {
     label: "Income",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--success))",
   },
   expense: {
     label: "Expense",
-    color: "hsl(var(--accent))",
+    color: "hsl(var(--destructive))",
   },
 }
 
@@ -91,7 +91,10 @@ const IncomeExpenseChart = () => {
               <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact'})} />
               <Tooltip
                 cursor={{ fill: "hsl(var(--muted))" }}
-                content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />}
+                content={<ChartTooltipContent formatter={(value, name) => {
+                  const color = name === 'income' ? 'text-green-500' : name === 'expense' ? 'text-red-500' : '';
+                  return <span className={color}>{formatCurrency(value as number)}</span>
+                }} />}
               />
               <Bar dataKey="income" fill="var(--color-income)" radius={[4, 4, 0, 0]} />
               <Bar dataKey="expense" fill="var(--color-expense)" radius={[4, 4, 0, 0]} />
