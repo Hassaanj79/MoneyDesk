@@ -18,12 +18,14 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
 
+// Check if running in a browser environment on localhost
 if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    // Use a try-catch block to prevent errors if emulators are not running
     try {
         console.log("Connecting to Firebase Emulators");
         connectAuthEmulator(auth, "http://127.0.0.1:9099", { disableWarnings: true });
         connectFirestoreEmulator(db, "127.0.0.1", 8080);
     } catch (e) {
-        console.error("Error connecting to emulators:", e);
+        console.error("Error connecting to Firebase emulators. Please ensure they are running.", e);
     }
 }
