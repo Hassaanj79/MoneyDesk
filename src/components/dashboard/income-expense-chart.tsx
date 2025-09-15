@@ -13,11 +13,11 @@ import { useTransactions } from "@/contexts/transaction-context";
 const chartConfig = {
   income: {
     label: "Income",
-    color: "hsl(var(--success))",
+    color: "hsl(var(--primary))",
   },
   expense: {
     label: "Expense",
-    color: "hsl(var(--destructive))",
+    color: "hsl(var(--accent))",
   },
 }
 
