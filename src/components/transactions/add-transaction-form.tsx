@@ -42,6 +42,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { CameraCapture } from "./camera-capture";
 import Image from "next/image";
 import { CategoryCombobox } from "../categories/category-combobox";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -68,6 +69,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { categories, addCategory } = useCategories();
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -117,7 +119,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     });
 
     onSuccess?.();
-    form.reset();
+    router.push('/transactions');
   }
 
   const handlePhotoSelect = (photoDataUrl: string) => {
