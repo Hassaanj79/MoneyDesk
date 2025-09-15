@@ -22,6 +22,7 @@ import { Alert, AlertDescription } from "../ui/alert";
 import { Loader2 } from "lucide-react";
 import { Separator } from "../ui/separator";
 import { updateUserProfile } from "@/services/users";
+import { UserCredential } from "firebase/auth";
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters."),
@@ -46,17 +47,26 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
     defaultValues: { name: "", email: "", password: "" },
   });
 
+  const handleSuccessfulSignup = async (userCredential: UserCredential) => {
+    await updateUserProfile(userCredential.user.uid, { 
+      onboardingCompleted: false,
+      name: userCredential.user.displayName || undefined,
+      email: userCredential.user.email || undefined,
+    });
+    onSignupSuccess();
+  }
+
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setLoading(prev => ({...prev, email: true}));
     setError(null);
     try {
         const userCredential = await signup(values.email, values.password, values.name);
-        await updateUserProfile(userCredential.user.uid, { onboardingCompleted: false });
-        onSignupSuccess();
+        await handleSuccessfulSignup(userCredential);
     } catch(err: any) {
         if (err.code === 'auth/email-already-in-use') {
             setError("This email is already in use. Please try another one.");
         } else {
+            console.error("Signup error:", err);
             setError("An unexpected error occurred. Please try again.");
         }
     } finally {
@@ -68,18 +78,16 @@ export function SignupForm({ onSignupSuccess }: SignupFormProps) {
     setLoading(prev => ({...prev, [provider]: true}));
     setError(null);
     try {
+      let result;
       if (provider === 'google') {
-        const result = await loginWithGoogle();
-        await updateUserProfile(result.user.uid, { onboardingCompleted: false });
-        onSignupSuccess();
+        result = await loginWithGoogle();
+      } else {
+        result = await loginWithApple();
       }
-      if (provider === 'apple') {
-        const result = await loginWithApple();
-        await updateUserProfile(result.user.uid, { onboardingCompleted: false });
-        onSignupSuccess();
-      }
+      await handleSuccessfulSignup(result);
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
+        console.error("Social signup error:", error);
         setError("Failed to sign up. Please try again.");
       }
     } finally {
