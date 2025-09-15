@@ -24,7 +24,7 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function DateRangePicker({ className, date, onDateChange }: DateRangePickerProps) {
-  const [preset, setPreset] = React.useState<string>("custom");
+  const [preset, setPreset] = React.useState<string>("last-7-days");
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handlePresetChange = (value: string) => {
