@@ -65,7 +65,7 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
   const { addTransaction } = useTransactions();
   const { addNotification } = useNotifications();
   const { formatCurrency } = useCurrency();
-  const { accounts, addAccount } = useAccounts();
+  const { accounts } = useAccounts();
   const { categories, addCategory } = useCategories();
   const [cameraOpen, setCameraOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,14 +128,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
     if (newCategoryId) {
       form.setValue('categoryId', newCategoryId);
     }
-  };
-
-  const handleAccountCreated = async (account: Omit<Account, 'id' | 'userId' | 'balance'>) => {
-    const newAccountId = await addAccount(account);
-    if (newAccountId) {
-      form.setValue('accountId', newAccountId);
-    }
-    return { ...account, id: newAccountId || '', userId: '', balance: account.initialBalance };
   };
 
   const filteredCategories = categories.filter((c) => c.type === type);
@@ -220,7 +212,6 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
                   accounts={accounts}
                   value={field.value}
                   onChange={field.onChange}
-                  onAccountCreated={handleAccountCreated}
                 />
                 <FormMessage />
               </FormItem>

@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, PlusCircle } from "lucide-react"
+import { Check, ChevronsUpDown, PlusCircle, Wallet } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -28,13 +28,14 @@ import {
 } from "@/components/ui/dialog";
 import type { Account } from "@/types"
 import { AddAccountForm } from "./add-account-form"
+import { useAccounts } from "@/contexts/account-context"
+import { useNotifications } from "@/hooks/use-notifications"
 
 type AccountComboboxProps = {
     accounts: Account[];
     disabled?: boolean;
     value: string;
     onChange: (value: string) => void;
-    onAccountCreated: (account: Omit<Account, 'id' | 'userId' | 'balance'>) => Promise<Account>;
     placeholder?: string;
     searchPlaceholder?: string;
     emptyPlaceholder?: string;
@@ -45,19 +46,28 @@ export function AccountCombobox({
     disabled,
     value,
     onChange,
-    onAccountCreated,
     placeholder = "Select account...",
     searchPlaceholder = "Search accounts...",
     emptyPlaceholder = "No account found.",
 }: AccountComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [addAccountDialogOpen, setAddAccountDialogOpen] = React.useState(false);
+  const { addAccount } = useAccounts();
+  const { addNotification } = useNotifications();
+
 
   const handleCreateSuccess = async (newAccountName: string, newAccount: Omit<Account, 'id' | 'userId' | 'balance'>) => {
-    const createdAccount = await onAccountCreated(newAccount);
-    onChange(createdAccount.id);
-    setAddAccountDialogOpen(false);
-    setOpen(false);
+    const newAccountId = await addAccount(newAccount);
+    if(newAccountId) {
+      onChange(newAccountId);
+      addNotification({
+          icon: Wallet,
+          title: 'Account Added',
+          description: `The account "${newAccountName}" has been added successfully.`
+      });
+      setAddAccountDialogOpen(false);
+      setOpen(false);
+    }
   };
 
   return (

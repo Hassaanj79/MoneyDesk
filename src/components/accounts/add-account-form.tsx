@@ -46,12 +46,9 @@ export function AddAccountForm({ onSuccess }: AddAccountFormProps) {
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
-    // We call addAccount from the context if it's used in the Accounts page,
-    // but we let the parent component handle creation if it's in the combobox.
+    await addAccount(values);
     if (onSuccess) {
       onSuccess(values.name, values);
-    } else {
-      await addAccount(values);
     }
     form.reset();
   }
