@@ -69,8 +69,8 @@ const IncomeExpenseChart = () => {
     }
   }, [date, transactions]);
 
-  const fromDate = date?.from ? format(date.from, "LLL dd, y") : null;
-  const toDate = date?.to ? format(date.to, "LLL dd, y") : null;
+  const fromDate = date?.from ? format(date.from, "LLL dd, yy") : null;
+  const toDate = date?.to ? format(date.to, "LLL dd, yy") : null;
 
   return (
     <Card>
@@ -85,7 +85,7 @@ const IncomeExpenseChart = () => {
       <CardContent>
         <div className="h-[300px]">
            <ChartContainer config={chartConfig} className="w-full h-full">
-            <BarChart accessibilityLayer data={chartData} margin={{ top: 5, right: 20, left: 20, bottom: 5 }}>
+            <BarChart accessibilityLayer data={chartData} margin={{ left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} />
               <XAxis dataKey="month" tickLine={false} axisLine={false} />
               <YAxis tickLine={false} axisLine={false} tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact'})} />
