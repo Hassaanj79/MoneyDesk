@@ -177,10 +177,10 @@ export function Header() {
         
 
         <div className="flex w-full items-center gap-1 md:ml-auto md:gap-2 justify-end">
-            <div className={cn("hidden", isMobile ? "sm:hidden" : "sm:block")}>
+            <div className="hidden md:block">
                 <DateRangePicker date={date} onDateChange={setDate} />
             </div>
-             <div className={cn(isMobile ? "sm:block" : "hidden")}>
+             <div className="block md:hidden">
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" size="icon">
@@ -195,7 +195,7 @@ export function Header() {
             <Popover open={searchPopoverOpen} onOpenChange={setSearchPopoverOpen}>
             <PopoverTrigger asChild>
                 <div className="relative flex-1 md:grow-0 max-w-sm">
-                  <div className={cn(isMobile ? 'block' : 'hidden', searchVisible ? 'hidden' : 'block')}>
+                  <div className={cn('md:hidden', searchVisible ? 'hidden' : 'block')}>
                     <Button variant="ghost" size="icon" onClick={() => setSearchVisible(true)}>
                       <Search className="h-5 w-5 text-muted-foreground" />
                     </Button>
@@ -218,7 +218,7 @@ export function Header() {
                         <Button
                         variant="ghost"
                         size="icon"
-                        className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full", isMobile ? "block": "hidden")}
+                        className={cn("absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7 rounded-full", "md:hidden")}
                         onClick={() => {
                           clearSearch();
                           setSearchVisible(false)
@@ -326,7 +326,7 @@ export function Header() {
             </DropdownMenu>
 
         </div>
-        <RecapStory open={recapOpen} onOpenChange={setRecapOpen} />
+        <RecapStory open={recapOpen} onOpenchange={setRecapOpen} />
     </header>
   );
 

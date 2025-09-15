@@ -86,11 +86,11 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
             id="date"
             variant={"outline"}
             className={cn(
-              "w-full justify-start text-left font-normal md:w-auto",
+              "w-full justify-start text-left font-normal md:w-[260px]",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon className="mr-0 md:mr-2 h-4 w-4" />
+            <CalendarIcon className="mr-2 h-4 w-4" />
             <span className="hidden md:inline">
                 {date?.from ? (
                 date.to ? (
@@ -104,6 +104,19 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
                 ) : (
                 <span>Pick a date</span>
                 )}
+            </span>
+             <span className="md:hidden">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "MMM d")} - {format(date.to, "MMM d, yy")}
+                  </>
+                ) : (
+                  format(date.from, "LLL dd, yy")
+                )
+              ) : (
+                <span>Pick a date</span>
+              )}
             </span>
           </Button>
         </PopoverTrigger>
