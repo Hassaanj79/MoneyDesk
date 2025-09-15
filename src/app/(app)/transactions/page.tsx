@@ -177,7 +177,7 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Income</span>
+                      <span className="sm:inline hidden md:inline">Add Income</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -193,7 +193,7 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Expense</span>
+                      <span className="sm:inline hidden md:inline">Add Expense</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -349,5 +349,3 @@ export default function TransactionsPage() {
     </>
   );
 }
-
-    

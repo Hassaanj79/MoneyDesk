@@ -92,7 +92,7 @@ export default function DashboardGrid() {
           icon={Wallet}
         />
       ),
-      colSpan: "lg:col-span-1",
+      colSpan: "md:col-span-1",
     },
     {
       id: "income",
@@ -104,7 +104,7 @@ export default function DashboardGrid() {
           change={incomeChange}
         />
       ),
-      colSpan: "lg:col-span-1",
+      colSpan: "md:col-span-1",
     },
     {
       id: "expense",
@@ -116,22 +116,22 @@ export default function DashboardGrid() {
           change={expenseChange}
         />
       ),
-      colSpan: "lg:col-span-1",
+      colSpan: "md:col-span-1",
     },
     {
       id: "chart",
       component: <IncomeExpenseChart />,
-      colSpan: "lg:col-span-3",
+      colSpan: "md:col-span-3",
     },
     {
       id: "budget",
       component: <BudgetOverview />,
-      colSpan: "lg:col-span-2",
+      colSpan: "md:col-span-2",
     },
     {
       id: "recent",
       component: <RecentTransactions />,
-      colSpan: "lg:col-span-1",
+      colSpan: "md:col-span-1",
     },
   ];
 
