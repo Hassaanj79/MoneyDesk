@@ -15,7 +15,7 @@ import {
 import { useTheme } from "next-themes"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { useEffect } from "react"
-import { Computer } from "lucide-react"
+import { Computer, Moon, Sun } from "lucide-react"
 
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark", "system"], {
@@ -24,10 +24,13 @@ const appearanceFormSchema = z.object({
 })
 
 export function AppearanceForm() {
-  const { setTheme, theme } = useTheme()
+  const { setTheme, theme, resolvedTheme } = useTheme()
 
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
+    defaultValues: {
+      theme: "system",
+    }
   })
   
   useEffect(() => {
@@ -57,7 +60,7 @@ export function AppearanceForm() {
                     field.onChange(value as "light" | "dark" | "system")
                     setTheme(value as "light" | "dark" | "system")
                   }}
-                  value={theme ?? 'system'}
+                  value={field.value}
                   className="grid max-w-md grid-cols-1 sm:grid-cols-3 gap-8 pt-2"
                 >
                   <FormItem>
@@ -113,16 +116,12 @@ export function AppearanceForm() {
                     </FormLabel>
                   </FormItem>
                    <FormItem>
-                    <FormLabel className="[&:has([data-state=checked])>div]:border-primary">
+                    <FormLabel className="flex flex-col items-center justify-center rounded-md border-2 border-muted p-1 hover:border-accent [&:has([data-state=checked])]:border-primary h-full">
                       <FormControl>
                         <RadioGroupItem value="system" className="sr-only" />
                       </FormControl>
-                      <div className="items-center rounded-md border-2 border-muted p-1 hover:border-accent">
-                        <div className="flex items-center justify-center h-[116px] rounded-sm">
-                            <Computer className="h-10 w-10 text-muted-foreground" />
-                        </div>
-                      </div>
-                      <span className="block w-full p-2 text-center font-normal">
+                      <Computer className="h-8 w-8 mb-2" />
+                      <span className="font-normal">
                         System
                       </span>
                     </FormLabel>
