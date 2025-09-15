@@ -44,13 +44,7 @@ import {
 import { useNotifications } from "@/hooks/use-notifications";
 import { useCurrency } from "@/hooks/use-currency";
 
-const generatedReports = [
-  { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
-  { id: "2", name: "September 2024 Spending", date: "2024-10-2", type: "CSV" },
-  { id: "3", name: "Q3 2024 Income Statement", date: "2024-10-01", type: "PDF" },
-  { id: "4", name: "August 2024 Transactions", date: "2024-09-05", type: "CSV" },
-  { id: "5", name: "Q2 2024 Summary", date: "2024-07-03", type: "PDF" },
-];
+const generatedReports: any[] = [];
 
 const chartConfig = {
   amount: {
@@ -335,19 +329,27 @@ export default function ReportsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {generatedReports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.name}</TableCell>
-                  <TableCell>{report.date}</TableCell>
-                  <TableCell>{report.type}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
+              {generatedReports.length > 0 ? (
+                generatedReports.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell className="font-medium">{report.name}</TableCell>
+                    <TableCell>{report.date}</TableCell>
+                    <TableCell>{report.type}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon">
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">Download</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No reports generated yet.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>
