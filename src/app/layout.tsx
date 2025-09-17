@@ -6,6 +6,7 @@ import AppLayout from '@/components/app-layout';
 import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
   title: 'MoneyDesk',
@@ -37,6 +38,7 @@ export default function RootLayout({
             </TransactionProvider>
           </DateRangeProvider>
           <Toaster />
+          <SpeedInsights />
         </ThemeProvider>
       </body>
     </html>
