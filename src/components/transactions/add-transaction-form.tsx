@@ -29,28 +29,20 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Upload } from "lucide-react";
+import { ArrowDown, ArrowUp, CalendarIcon, Upload, Camera, X } from "lucide-react";
 import { format } from "date-fns";
-import type { Account, Category } from "@/types";
+import type { Category, Account } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
-
-const accounts: Account[] = [
-  { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
-  { id: "2", name: "Venture Rewards", type: "credit-card", initialBalance: -2500.0, balance: 0 },
-  { id: "3", name: "PayPal", type: "paypal", initialBalance: 850.25, balance: 0 },
-  { id: "4", name: "Cash", type: "cash", initialBalance: 300.0, balance: 0 },
-];
-
-const categories: Category[] = [
-  { id: "1", name: "Food", type: "expense" },
-  { id: "2", name: "Shopping", type: "expense" },
-  { id: "3", name: "Transport", type: "expense" },
-  { id: "4", name: "Entertainment", type: "expense" },
-  { id: "5", name: "Salary", type: "income" },
-  { id: "6", name: "Freelance", type: "income" },
-  { id: '7', name: 'Groceries', type: 'expense' },
-  { id: '8', name: 'Utilities', type: 'expense' },
-];
+import { useNotifications } from "@/hooks/use-notifications";
+import { useCurrency } from "@/hooks/use-currency";
+import { useEffect, useRef, useState } from "react";
+import { useAccounts } from "@/contexts/account-context";
+import { useCategories } from "@/contexts/category-context";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
+import { CameraCapture } from "./camera-capture";
+import Image from "next/image";
+import { CategoryCombobox } from "../categories/category-combobox";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -58,7 +50,7 @@ const formSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive."),
   date: z.date(),
   accountId: z.string().min(1, "Please select an account."),
-  category: z.string().min(1, "Please select a category."),
+  categoryId: z.string().min(1, "Please select a category."),
   isRecurring: z.boolean().default(false),
   recurrenceFrequency: z.string().optional(),
   receipt: z.any().optional(),
@@ -71,29 +63,76 @@ type AddTransactionFormProps = {
 
 export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps) {
   const { addTransaction } = useTransactions();
+  const { addNotification } = useNotifications();
+  const { formatCurrency } = useCurrency();
+  const { accounts } = useAccounts();
+  const { categories, addCategory } = useCategories();
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       type: type,
-      amount: 0,
+      amount: '' as any,
       date: new Date(),
       accountId: "",
-      category: "",
+      categoryId: "",
       name: "",
       isRecurring: false,
+      receipt: null,
     },
   });
 
-  const isRecurring = form.watch("isRecurring");
-
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    addTransaction({
-      ...values,
-      id: Date.now().toString(),
-      date: format(values.date, "yyyy-MM-dd"),
+  useEffect(() => {
+    form.reset({
+      type: type,
+      amount: '' as any,
+      date: new Date(),
+      accountId: "",
+      categoryId: "",
+      name: "",
+      isRecurring: false,
+      receipt: null,
     });
+  }, [type, form]);
+  
+
+  const isRecurring = form.watch("isRecurring");
+  const receiptPreview = form.watch("receipt");
+
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    const { receipt, ...transactionData } = values;
+    const finalReceipt = receipt ? receipt : null;
+
+    await addTransaction({
+      ...transactionData,
+      date: format(values.date, "yyyy-MM-dd"),
+      receipt: finalReceipt,
+    });
+
+    addNotification({
+      icon: values.type === 'income' ? ArrowUp : ArrowDown,
+      title: `Transaction Added`,
+      description: `${values.name} for ${formatCurrency(values.amount)} has been saved.`,
+    });
+
     onSuccess?.();
+    router.push('/transactions');
   }
+
+  const handlePhotoSelect = (photoDataUrl: string) => {
+    form.setValue("receipt", photoDataUrl);
+    setCameraOpen(false);
+  }
+
+  const handleCategoryCreated = async (name: string) => {
+    const newCategoryId = await addCategory({ name, type });
+    if (newCategoryId) {
+      form.setValue('categoryId', newCategoryId);
+    }
+  };
 
   const filteredCategories = categories.filter((c) => c.type === type);
 
@@ -127,163 +166,207 @@ export function AddTransactionForm({ type, onSuccess }: AddTransactionFormProps)
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <FormField
             control={form.control}
             name="date"
             render={({ field }) => (
-                <FormItem className="flex flex-col">
+              <FormItem className="flex flex-col">
                 <FormLabel>Date</FormLabel>
                 <Popover>
-                    <PopoverTrigger asChild>
+                  <PopoverTrigger asChild>
                     <FormControl>
-                        <Button
+                      <Button
                         variant={"outline"}
                         className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                          "w-full pl-3 text-left font-normal",
+                          !field.value && "text-muted-foreground"
                         )}
-                        >
+                      >
                         {field.value ? (
-                            format(field.value, "PPP")
+                          format(field.value, "PPP")
                         ) : (
-                            <span>Pick a date</span>
+                          <span>Pick a date</span>
                         )}
                         <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                      </Button>
                     </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
                     <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
+                      mode="single"
+                      selected={field.value}
+                      onSelect={field.onChange}
+                      initialFocus
                     />
-                    </PopoverContent>
+                  </PopoverContent>
                 </Popover>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
 
-            <FormField
+          <FormField
             control={form.control}
             name="accountId"
             render={({ field }) => (
-                <FormItem>
+              <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                >
-                    <FormControl>
+                 <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Select an account" />
+                      <SelectValue placeholder="Select an account" />
                     </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {accounts.map((acc) => (
-                        <SelectItem key={acc.id} value={acc.id}>
+                  </FormControl>
+                  <SelectContent>
+                    {accounts.map(acc => (
+                      <SelectItem key={acc.id} value={acc.id}>
                         {acc.name}
-                        </SelectItem>
+                      </SelectItem>
                     ))}
-                    </SelectContent>
+                  </SelectContent>
                 </Select>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
 
         <FormField
           control={form.control}
-          name="category"
+          name="categoryId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a category" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+               <CategoryCombobox
+                    categories={filteredCategories}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onCategoryCreated={handleCategoryCreated}
+                />
               <FormMessage />
             </FormItem>
           )}
         />
         
-        <div className="flex items-center space-x-2">
+        <FormField
+          control={form.control}
+          name="isRecurring"
+          render={({ field }) => (
+            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+              <div className="space-y-0.5">
+                <FormLabel>Recurring Transaction</FormLabel>
+              </div>
+              <FormControl>
+                <Switch
+                  checked={field.value}
+                  onCheckedChange={field.onChange}
+                />
+              </FormControl>
+            </FormItem>
+          )}
+        />
+
+        {isRecurring && (
+          <div className="rounded-lg border p-3 shadow-sm">
             <FormField
-            control={form.control}
-            name="isRecurring"
-            render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm flex-1">
-                <div className="space-y-0.5">
-                    <FormLabel>Recurring Transaction</FormLabel>
-                </div>
-                <FormControl>
-                    <Switch
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                    />
-                </FormControl>
+              control={form.control}
+              name="recurrenceFrequency"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Frequency</FormLabel>
+                  <Select
+                    onValueChange={field.onChange}
+                    defaultValue={field.value}
+                  >
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Frequency" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="daily">Daily</SelectItem>
+                      <SelectItem value="weekly">Weekly</SelectItem>
+                      <SelectItem value="monthly">Monthly</SelectItem>
+                      <SelectItem value="yearly">Yearly</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </FormItem>
-            )}
+              )}
             />
-            {isRecurring && (
-                 <FormField
-                 control={form.control}
-                 name="recurrenceFrequency"
-                 render={({ field }) => (
-                   <FormItem className="flex-1">
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                       <FormControl>
-                         <SelectTrigger>
-                           <SelectValue placeholder="Frequency" />
-                         </SelectTrigger>
-                       </FormControl>
-                       <SelectContent>
-                         <SelectItem value="daily">Daily</SelectItem>
-                         <SelectItem value="weekly">Weekly</SelectItem>
-                         <SelectItem value="monthly">Monthly</SelectItem>
-                         <SelectItem value="yearly">Yearly</SelectItem>
-                       </SelectContent>
-                     </Select>
-                   </FormItem>
-                 )}
-               />
-            )}
-        </div>
+          </div>
+        )}
         
         {type === 'expense' && (
-             <FormField
-             control={form.control}
-             name="receipt"
-             render={({ field }) => (
-               <FormItem>
-                 <FormLabel>Receipt</FormLabel>
-                 <FormControl>
-                   <Button variant="outline" asChild className="w-full cursor-pointer">
-                     <div>
-                       <Upload className="mr-2 h-4 w-4" />
-                       Upload or Capture Image
-                       <Input type="file" accept="image/*" className="sr-only" onChange={(e) => field.onChange(e.target.files)} />
-                     </div>
-                   </Button>
-                 </FormControl>
-                 <FormMessage />
-               </FormItem>
-             )}
-           />
+            <FormField
+                control={form.control}
+                name="receipt"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Receipt</FormLabel>
+                    <FormControl>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <Button variant="outline" type="button" onClick={() => fileInputRef.current?.click()}>
+                                <Upload className="mr-2 h-4 w-4" />
+                                Upload Image
+                            </Button>
+                            <Input 
+                                type="file" 
+                                accept="image/*" 
+                                className="sr-only" 
+                                ref={fileInputRef} 
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                            form.setValue("receipt", reader.result as string);
+                                        };
+                                        reader.readAsDataURL(file);
+                                    }
+                                }}
+                            />
+
+                            <Dialog open={cameraOpen} onOpenChange={setCameraOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="outline" type="button">
+                                        <Camera className="mr-2 h-4 w-4" />
+                                        Capture Image
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Capture Receipt</DialogTitle>
+                                </DialogHeader>
+                                <CameraCapture onPhotoTaken={handlePhotoSelect} />
+                                </DialogContent>
+                            </Dialog>
+                        </div>
+                    </FormControl>
+                     {receiptPreview && (
+                        <div className="mt-4 relative w-full h-48 sm:w-48">
+                            <Image
+                                src={receiptPreview}
+                                alt="Receipt preview"
+                                layout="fill"
+                                objectFit="cover"
+                                className="rounded-md border"
+                            />
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                size="icon"
+                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                onClick={() => form.setValue("receipt", null)}
+                            >
+                                <X className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    )}
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
         )}
 
 

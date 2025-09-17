@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -37,15 +38,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Account } from "@/types";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Wallet } from "lucide-react";
 import { useTransactions } from "@/contexts/transaction-context";
-
-const initialAccounts: Omit<Account, 'balance'>[] = [
-  { id: '1', name: 'Chase Checking', type: 'bank', initialBalance: 12500.50 },
-  { id: '2', name: 'Venture Rewards', type: 'credit-card', initialBalance: -2500.00 },
-  { id: '3', name: 'PayPal', type: 'paypal', initialBalance: 850.25 },
-  { id: '4', name: 'Cash', type: 'cash', initialBalance: 300.00 },
-];
+import { useCurrency } from "@/hooks/use-currency";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useAccounts } from "@/contexts/account-context";
 
 function getAccountTypeLabel(type: Account['type']) {
     switch (type) {
@@ -60,16 +57,18 @@ function getAccountTypeLabel(type: Account['type']) {
     }
 }
 
-
 export default function AccountsPage() {
-  const [accounts, setAccounts] = useState<Omit<Account, 'balance'>[]>(initialAccounts);
+  const { accounts, deleteAccount } = useAccounts();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState<Account | null>(null);
   const { transactions } = useTransactions();
+  const { formatCurrency } = useCurrency();
+  const { addNotification } = useNotifications();
+
 
   const processedAccounts: Account[] = useMemo(() => {
-    return accounts.map(account => {
+    return accounts.map((account) => {
       const balance = transactions.reduce((acc, t) => {
         if (t.accountId === account.id) {
           return acc + (t.type === 'income' ? t.amount : -t.amount);
@@ -80,10 +79,13 @@ export default function AccountsPage() {
     })
   }, [accounts, transactions]);
 
-  const handleAddAccount = (newAccountData: Omit<Account, 'id' | 'balance'>) => {
-    const newAccount = { ...newAccountData, id: (accounts.length + 1).toString() };
-    setAccounts(prev => [...prev, newAccount]);
+  const handleAddAccountSuccess = (newAccountName: string) => {
     setAddDialogOpen(false);
+    addNotification({
+        icon: Wallet,
+        title: 'Account Added',
+        description: `The account "${newAccountName}" has been added successfully.`
+    })
   }
 
   const handleDeleteClick = (account: Account) => {
@@ -91,9 +93,15 @@ export default function AccountsPage() {
     setDeleteDialogOpen(true);
   };
   
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (selectedAccount) {
-      setAccounts(prev => prev.filter(acc => acc.id !== selectedAccount.id));
+      await deleteAccount(selectedAccount.id);
+       addNotification({
+        icon: Trash2,
+        title: 'Account Deleted',
+        description: `The account "${selectedAccount.name}" has been deleted.`,
+        variant: 'destructive'
+      });
     }
     setDeleteDialogOpen(false);
     setSelectedAccount(null);
@@ -111,7 +119,7 @@ export default function AccountsPage() {
               </CardDescription>
             </div>
             <DialogTrigger asChild>
-              <Button className="ml-auto gap-1">
+              <Button className="ml-auto gap-1" onClick={() => setAddDialogOpen(true)}>
                 <PlusCircle className="h-4 w-4" />
                 Add Account
               </Button>
@@ -133,7 +141,7 @@ export default function AccountsPage() {
                     <TableCell className="font-medium">{account.name}</TableCell>
                     <TableCell>{getAccountTypeLabel(account.type)}</TableCell>
                     <TableCell className="text-right">
-                      ${account.balance.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                      {formatCurrency(account.balance)}
                     </TableCell>
                      <TableCell className="text-right">
                       <Button variant="ghost" size="icon" onClick={(e) => {
@@ -153,7 +161,7 @@ export default function AccountsPage() {
           <DialogHeader>
             <DialogTitle>Add a New Account</DialogTitle>
           </DialogHeader>
-          <AddAccountForm onAccountAdded={handleAddAccount}/>
+          <AddAccountForm onSuccess={handleAddAccountSuccess}/>
         </DialogContent>
       </Dialog>
       
@@ -162,7 +170,7 @@ export default function AccountsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
             <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete this account and all associated transactions.
+              This action cannot be undone. This will permanently delete this account. Related transactions will NOT be deleted.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

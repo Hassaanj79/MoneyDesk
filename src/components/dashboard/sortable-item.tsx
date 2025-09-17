@@ -1,7 +1,7 @@
 
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
@@ -14,6 +14,15 @@ type SortableItemProps = {
 };
 
 export function SortableItem({ id, children, className }: SortableItemProps) {
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   const {
     attributes,
     listeners,
@@ -21,7 +30,7 @@ export function SortableItem({ id, children, className }: SortableItemProps) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id });
+  } = useSortable({ id, disabled: isMobile });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -32,9 +41,11 @@ export function SortableItem({ id, children, className }: SortableItemProps) {
 
   return (
     <div ref={setNodeRef} style={style} className={cn("relative group", className)}>
-       <button {...attributes} {...listeners} className="absolute top-2 right-2 p-1 bg-background/50 rounded-md cursor-grab focus:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10">
-          <GripVertical className="h-5 w-5 text-muted-foreground" />
+       {!isMobile && (
+        <button {...attributes} {...listeners} className="absolute top-2 right-2 p-1 bg-background/50 rounded-md cursor-grab focus:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity z-10">
+            <GripVertical className="h-5 w-5 text-muted-foreground" />
         </button>
+       )}
       {children}
     </div>
   );

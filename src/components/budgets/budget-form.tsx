@@ -15,8 +15,10 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { Budget, Category } from "@/types";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { CategoryCombobox } from "../categories/category-combobox";
+import { useBudgets } from "@/contexts/budget-context";
+import { useCategories } from "@/contexts/category-context";
 
 const formSchema = z.object({
   categoryId: z.string().min(1, "Please select a category."),
@@ -24,14 +26,16 @@ const formSchema = z.object({
 });
 
 type BudgetFormProps = {
-  onSubmit: (data: z.infer<typeof formSchema>) => void;
-  existingBudget?: Budget | null;
-  allBudgets: Budget[];
-  categories: Category[];
-  onCategoryCreated: (name: string) => Category;
+  onSuccess: () => void;
+  existingBudget?: (Budget & {categoryName: string}) | null;
+  allBudgets: (Budget & {categoryName: string})[];
+  onCategoryCreated: (name: string) => Promise<Category>;
 };
 
-export function BudgetForm({ onSubmit, existingBudget, allBudgets, categories, onCategoryCreated }: BudgetFormProps) {
+export function BudgetForm({ onSuccess, existingBudget, allBudgets, onCategoryCreated }: BudgetFormProps) {
+  const { addBudget, updateBudget } = useBudgets();
+  const { categories } = useCategories();
+  
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,15 +51,26 @@ export function BudgetForm({ onSubmit, existingBudget, allBudgets, categories, o
     })
   }, [existingBudget, form])
 
-  const handleCategoryCreated = (name: string) => {
-    const newCategory = onCategoryCreated(name);
+  const handleCategoryCreated = async (name: string) => {
+    const newCategory = await onCategoryCreated(name);
     form.setValue('categoryId', newCategory.id);
   }
 
   const availableCategories = categories.filter(c => 
-    !allBudgets.some(b => b.categoryId === c.id) || (existingBudget && c.id === existingBudget.categoryId)
+    c.type === 'expense' &&
+    (!allBudgets.some(b => b.categoryId === c.id) || (existingBudget && c.id === existingBudget.categoryId))
   );
 
+  async function onSubmit(data: z.infer<typeof formSchema>) {
+    if (existingBudget) {
+      await updateBudget(existingBudget.id, { limit: data.limit });
+    } else {
+      if (!allBudgets.some(b => b.categoryId === data.categoryId)) {
+        await addBudget(data);
+      }
+    }
+    onSuccess();
+  }
 
   return (
     <Form {...form}>

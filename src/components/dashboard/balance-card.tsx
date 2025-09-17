@@ -11,31 +11,36 @@ type BalanceCardProps = {
   icon: LucideIcon;
   change?: string;
   changeDescription?: string;
+  className?: string;
+  iconClassName?: string;
 };
 
-const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription }: BalanceCardProps) => {
+const BalanceCard = ({ title, amount, icon: Icon, change, changeDescription, className, iconClassName }: BalanceCardProps) => {
   const isPositive = change?.startsWith("+");
   const isNegative = change?.startsWith("-");
   const isDateRange = title === 'Date Range';
+
+  const isExpense = title === 'Expense';
 
   return (
     <Card className="flex flex-col">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium text-muted-foreground whitespace-nowrap">{title}</CardTitle>
-        <Icon className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
+        <Icon className={cn("h-5 w-5", iconClassName)} aria-hidden="true" />
       </CardHeader>
-      <CardContent>
-        <div className={cn("font-semibold tracking-tight", isDateRange ? "text-base" : "text-3xl")}>{amount}</div>
-        {change && (
+      <CardContent className="flex-1">
+        <div className={cn("font-semibold tracking-tight text-3xl", className)}>{amount}</div>
+        {change ? (
           <p className={cn(
             "text-xs font-medium",
-            isPositive && "text-green-700 dark:text-green-400",
-            isNegative && "text-red-700 dark:text-red-400",
+            isExpense ? (isPositive ? "text-red-700 dark:text-red-400" : "text-green-700 dark:text-green-400") : (isPositive ? "text-green-700 dark:text-green-400" : "text-red-700 dark:text-red-400"),
             !isPositive && !isNegative && "text-muted-foreground",
             isDateRange ? "whitespace-nowrap" : ""
           )}>
             {change} {changeDescription || 'from last month'}
           </p>
+        ) : (
+          <p className="text-xs font-medium invisible">No change</p>
         )}
       </CardContent>
     </Card>

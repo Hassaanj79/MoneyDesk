@@ -1,11 +1,16 @@
-
 import type { Metadata } from 'next';
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
-import AppLayout from '@/components/app-layout';
 import { DateRangeProvider } from '@/contexts/date-range-context';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TransactionProvider } from '@/contexts/transaction-context';
+import { NotificationProvider } from '@/contexts/notification-context';
+import { CurrencyProvider } from '@/contexts/currency-context';
+import { AuthProvider } from '@/contexts/auth-context';
+import { AccountProvider } from '@/contexts/account-context';
+import { BudgetProvider } from '@/contexts/budget-context';
+import { CategoryProvider } from '@/contexts/category-context';
+import { RecurringNotifications } from '@/components/recurring-notifications';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 
 export const metadata: Metadata = {
@@ -32,12 +37,25 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <DateRangeProvider>
-            <TransactionProvider>
-              <AppLayout>{children}</AppLayout>
-            </TransactionProvider>
-          </DateRangeProvider>
-          <Toaster />
+          <AuthProvider>
+            <NotificationProvider>
+              <CurrencyProvider>
+                <CategoryProvider>
+                  <AccountProvider>
+                    <TransactionProvider>
+                       <DateRangeProvider>
+                        <BudgetProvider>
+                            <RecurringNotifications />
+                            {children}
+                            <Toaster />
+                        </BudgetProvider>
+                      </DateRangeProvider>
+                    </TransactionProvider>
+                  </AccountProvider>
+                </CategoryProvider>
+              </CurrencyProvider>
+            </NotificationProvider>
+          </AuthProvider>
           <SpeedInsights />
         </ThemeProvider>
       </body>

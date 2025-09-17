@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/form"
 import { useTheme } from "next-themes"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { useEffect } from "react"
+import { Moon, Sun } from "lucide-react"
 
 const appearanceFormSchema = z.object({
   theme: z.enum(["light", "dark"], {
@@ -22,17 +24,22 @@ const appearanceFormSchema = z.object({
 })
 
 export function AppearanceForm() {
-  const { setTheme } = useTheme()
+  const { setTheme, theme } = useTheme()
 
   const form = useForm<z.infer<typeof appearanceFormSchema>>({
     resolver: zodResolver(appearanceFormSchema),
     defaultValues: {
       theme: "light",
-    },
+    }
   })
+  
+  useEffect(() => {
+    form.setValue("theme", theme === "dark" ? "dark" : "light");
+  }, [theme, form]);
+
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-3xl">
       <h3 className="text-lg font-medium">Appearance</h3>
       <p className="text-sm text-muted-foreground mb-6">
         Customize the look and feel of the application.
@@ -50,11 +57,11 @@ export function AppearanceForm() {
                 </FormDescription>
                 <RadioGroup
                   onValueChange={(value) => {
-                    field.onChange(value)
-                    setTheme(value)
+                    field.onChange(value as "light" | "dark")
+                    setTheme(value as "light" | "dark")
                   }}
-                  defaultValue={field.value}
-                  className="grid max-w-md grid-cols-2 gap-8 pt-2"
+                  value={field.value}
+                  className="grid max-w-md grid-cols-1 sm:grid-cols-2 gap-8 pt-2"
                 >
                   <FormItem>
                     <FormLabel className="[&:has([data-state=checked])>div]:border-primary">

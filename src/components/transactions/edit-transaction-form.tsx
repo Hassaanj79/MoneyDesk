@@ -30,26 +30,11 @@ import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { format, parseISO } from "date-fns";
-import type { Account, Category, Transaction } from "@/types";
+import type { Transaction } from "@/types";
 import { useTransactions } from "@/contexts/transaction-context";
+import { useAccounts } from "@/contexts/account-context";
+import { useCategories } from "@/contexts/category-context";
 
-const accounts: Account[] = [
-  { id: "1", name: "Chase Checking", type: "bank", initialBalance: 12500.5, balance: 0 },
-  { id: "2", name: "Venture Rewards", type: "credit-card", initialBalance: -2500.0, balance: 0 },
-  { id: "3", name: "PayPal", type: "paypal", initialBalance: 850.25, balance: 0 },
-  { id: "4", name: "Cash", type: "cash", initialBalance: 300.0, balance: 0 },
-];
-
-const categories: Category[] = [
-  { id: "1", name: "Food", type: "expense" },
-  { id: "2", name: "Shopping", type: "expense" },
-  { id: "3", name: "Transport", type: "expense" },
-  { id: "4", name: "Entertainment", type: "expense" },
-  { id: "5", name: "Salary", type: "income" },
-  { id: "6", name: "Freelance", type: "income" },
-  { id: '7', name: 'Groceries', type: 'expense' },
-  { id: '8', name: 'Utilities', type: 'expense' },
-];
 
 const formSchema = z.object({
   type: z.enum(["income", "expense"]),
@@ -57,7 +42,7 @@ const formSchema = z.object({
   amount: z.coerce.number().positive("Amount must be positive."),
   date: z.date(),
   accountId: z.string().min(1, "Please select an account."),
-  category: z.string().min(1, "Please select a category."),
+  categoryId: z.string().min(1, "Please select a category."),
 });
 
 type EditTransactionFormProps = {
@@ -67,6 +52,9 @@ type EditTransactionFormProps = {
 
 export function EditTransactionForm({ transaction, onSuccess }: EditTransactionFormProps) {
   const { updateTransaction } = useTransactions();
+  const { accounts } = useAccounts();
+  const { categories } = useCategories();
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -76,8 +64,8 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    updateTransaction(transaction.id, {
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    await updateTransaction(transaction.id, {
       ...values,
       date: format(values.date, "yyyy-MM-dd"),
     });
@@ -123,34 +111,36 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
             render={({ field }) => (
                 <FormItem className="flex flex-col">
                 <FormLabel>Date</FormLabel>
-                <Popover>
-                    <PopoverTrigger asChild>
-                    <FormControl>
-                        <Button
-                        variant={"outline"}
-                        className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                        )}
-                        >
-                        {field.value ? (
-                            format(field.value, "PPP")
-                        ) : (
-                            <span>Pick a date</span>
-                        )}
-                        <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                    </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                    />
-                    </PopoverContent>
-                </Popover>
+                <div>
+                  <Popover>
+                      <PopoverTrigger asChild>
+                      <FormControl>
+                          <Button
+                          variant={"outline"}
+                          className={cn(
+                              "w-full pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                          )}
+                          >
+                          {field.value ? (
+                              format(field.value, "PPP")
+                          ) : (
+                              <span>Pick a date</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                      </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                      />
+                      </PopoverContent>
+                  </Popover>
+                </div>
                 <FormMessage />
                 </FormItem>
             )}
@@ -160,25 +150,27 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
             control={form.control}
             name="accountId"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col">
                 <FormLabel>Account</FormLabel>
-                <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                >
-                    <FormControl>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select an account" />
-                    </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                    {accounts.map((acc) => (
-                        <SelectItem key={acc.id} value={acc.id}>
-                        {acc.name}
-                        </SelectItem>
-                    ))}
-                    </SelectContent>
-                </Select>
+                <div>
+                  <Select
+                      onValueChange={field.onChange}
+                      defaultValue={field.value}
+                  >
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Select an account" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      {accounts.map((acc) => (
+                          <SelectItem key={acc.id} value={acc.id}>
+                          {acc.name}
+                          </SelectItem>
+                      ))}
+                      </SelectContent>
+                  </Select>
+                </div>
                 <FormMessage />
                 </FormItem>
             )}
@@ -187,7 +179,7 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
 
         <FormField
           control={form.control}
-          name="category"
+          name="categoryId"
           render={({ field }) => (
             <FormItem>
               <FormLabel>Category</FormLabel>
@@ -199,7 +191,7 @@ export function EditTransactionForm({ transaction, onSuccess }: EditTransactionF
                 </FormControl>
                 <SelectContent>
                   {filteredCategories.map((cat) => (
-                    <SelectItem key={cat.id} value={cat.name}>
+                    <SelectItem key={cat.id} value={cat.id}>
                       {cat.name}
                     </SelectItem>
                   ))}

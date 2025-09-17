@@ -9,9 +9,11 @@ import { ArrowRight, ArrowUp, Car, Clapperboard, ShoppingBag, UtensilsCrossed, H
 import Link from "next/link";
 import { useTransactions } from "@/contexts/transaction-context";
 import { useDateRange } from "@/contexts/date-range-context";
-import { isWithinInterval, parseISO } from "date-fns";
+import { isWithinInterval, parseISO, format } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
+import { useCategories } from "@/contexts/category-context";
 
-const categoryIcons = {
+const categoryIcons: { [key: string]: React.ElementType } = {
     "Food": UtensilsCrossed,
     "Income": ArrowUp,
     "Shopping": ShoppingBag,
@@ -29,7 +31,9 @@ const categoryIcons = {
 
 const RecentTransactions = () => {
   const { transactions } = useTransactions();
+  const { categories } = useCategories();
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
 
   const recentTransactions = useMemo(() => {
     const sorted = [...transactions].sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
@@ -40,6 +44,10 @@ const RecentTransactions = () => {
     }
     return sorted.slice(0, 5);
   }, [transactions, date]);
+
+  const getCategoryName = (categoryId: string) => {
+    return categories.find(c => c.id === categoryId)?.name || "N/A";
+  }
 
   return (
     <Card>
@@ -55,7 +63,8 @@ const RecentTransactions = () => {
       <CardContent>
         <div className="space-y-4">
           {recentTransactions.map((transaction) => {
-            const Icon = categoryIcons[transaction.category as keyof typeof categoryIcons] || UtensilsCrossed;
+            const categoryName = getCategoryName(transaction.categoryId);
+            const Icon = categoryIcons[categoryName] || UtensilsCrossed;
             return (
               <div key={transaction.id} className="flex items-center">
                 <Avatar className="h-9 w-9">
@@ -65,10 +74,10 @@ const RecentTransactions = () => {
                 </Avatar>
                 <div className="ml-4 space-y-1">
                   <p className="text-sm font-medium leading-none">{transaction.name}</p>
-                  <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                  <p className="text-sm text-muted-foreground">{format(parseISO(transaction.date), 'MMM dd, yyyy')}</p>
                 </div>
                 <div className={`ml-auto font-medium ${transaction.type === "income" ? "text-green-500" : "text-red-500"}`}>
-                  {transaction.type === 'expense' ? '-' : '+'}${transaction.amount.toFixed(2)}
+                  {transaction.type === 'expense' ? '-' : '+'}{formatCurrency(transaction.amount)}
                 </div>
               </div>
             );

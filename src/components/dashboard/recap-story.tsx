@@ -42,6 +42,8 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { ChartContainer, ChartTooltipContent } from "../ui/chart";
+import { useCurrency } from "@/hooks/use-currency";
+import { useCategories } from "@/contexts/category-context";
 
 type RecapStoryProps = {
   open: boolean;
@@ -57,7 +59,13 @@ const chartConfig = {
 
 export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
   const { transactions } = useTransactions();
+  const { categories } = useCategories();
+  const { formatCurrency } = useCurrency();
   const now = new Date();
+
+  const getCategoryName = (categoryId: string) => {
+    return categories.find(c => c.id === categoryId)?.name || 'N/A';
+  }
 
   const recapData = useMemo(() => {
     const processPeriod = (
@@ -85,10 +93,11 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
       const spendingByCategory = currentTransactions
         .filter(t => t.type === 'expense')
         .reduce((acc, t) => {
-            if (!acc[t.category]) {
-                acc[t.category] = 0;
+            const categoryName = getCategoryName(t.categoryId);
+            if (!acc[categoryName]) {
+                acc[categoryName] = 0;
             }
-            acc[t.category] += t.amount;
+            acc[categoryName] += t.amount;
             return acc;
         }, {} as Record<string, number>);
 
@@ -129,7 +138,7 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
         { start: startOfYear(subYears(now, 1)), end: endOfYear(subYears(now, 1)) }
       ),
     ];
-  }, [transactions, now]);
+  }, [transactions, now, categories]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,14 +161,14 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
                             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                                 <ArrowUp className="h-8 w-8 text-green-500 mb-2"/>
                                 <p className="text-sm text-muted-foreground">Total Income</p>
-                                <p className="text-2xl font-bold">${recap.totalIncome.toFixed(2)}</p>
+                                <p className="text-2xl font-bold">{formatCurrency(recap.totalIncome)}</p>
                             </CardContent>
                         </Card>
                          <Card>
                             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                                 <ArrowDown className="h-8 w-8 text-red-500 mb-2"/>
                                 <p className="text-sm text-muted-foreground">Total Expenses</p>
-                                <p className="text-2xl font-bold">${recap.totalExpense.toFixed(2)}</p>
+                                <p className="text-2xl font-bold">{formatCurrency(recap.totalExpense)}</p>
                                 <p className={`text-xs ${parseFloat(recap.expenseChange) > 0 ? 'text-red-500' : 'text-green-500'}`}>
                                     {parseFloat(recap.expenseChange).toFixed(1)}% vs last period
                                 </p>
@@ -169,7 +178,7 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
                             <CardContent className="p-4 flex flex-col items-center justify-center text-center">
                                 <Scale className="h-8 w-8 text-muted-foreground mb-2"/>
                                 <p className="text-sm text-muted-foreground">Net Savings</p>
-                                <p className="text-2xl font-bold">${recap.netSavings.toFixed(2)}</p>
+                                <p className="text-2xl font-bold">{formatCurrency(recap.netSavings)}</p>
                             </CardContent>
                         </Card>
                          <Card>
@@ -179,7 +188,7 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
                                 {recap.topCategory ? (
                                     <>
                                         <p className="text-lg font-bold">{recap.topCategory.name}</p>
-                                        <p className="text-muted-foreground">${recap.topCategory.amount.toFixed(2)}</p>
+                                        <p className="text-muted-foreground">{formatCurrency(recap.topCategory.amount)}</p>
                                     </>
                                 ) : <p className="text-lg font-bold">N/A</p>}
                             </CardContent>
@@ -193,7 +202,7 @@ export function RecapStory({ open, onOpenChange }: RecapStoryProps) {
                                     <BarChart layout="vertical" accessibilityLayer data={recap.spendingData} margin={{ left: 10, right: 30 }}>
                                         <XAxis type="number" hide />
                                         <YAxis dataKey="category" type="category" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} width={80}/>
-                                        <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={<ChartTooltipContent />} />
+                                        <Tooltip cursor={{ fill: "hsl(var(--muted))" }} content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)} />} />
                                         <Bar dataKey="amount" fill="var(--color-amount)" radius={4} />
                                     </BarChart>
                                 </ChartContainer>

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useMemo } from "react";
@@ -27,7 +28,7 @@ import {
   CartesianGrid,
 } from "recharts";
 import { Button } from "@/components/ui/button";
-import { Download, ArrowUp, ArrowDown, Scale, ChevronDown } from "lucide-react";
+import { Download, ArrowUp, ArrowDown, Scale, ChevronDown, FileText } from "lucide-react";
 import { useDateRange } from "@/contexts/date-range-context";
 import { format, isWithinInterval, parseISO } from "date-fns";
 import { ChartContainer, ChartTooltipContent } from "@/components/ui/chart";
@@ -40,14 +41,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useNotifications } from "@/hooks/use-notifications";
+import { useCurrency } from "@/hooks/use-currency";
+import { cn } from "@/lib/utils";
 
-const generatedReports = [
-  { id: "1", name: "Q3 2024 Expense Report", date: "2024-10-05", type: "PDF" },
-  { id: "2", name: "September 2024 Spending", date: "2024-10-02", type: "CSV" },
-  { id: "3", name: "Q3 2024 Income Statement", date: "2024-10-01", type: "PDF" },
-  { id: "4", name: "August 2024 Transactions", date: "2024-09-05", type: "CSV" },
-  { id: "5", name: "Q2 2024 Summary", date: "2024-07-03", type: "PDF" },
-];
+const generatedReports: any[] = [];
 
 const chartConfig = {
   amount: {
@@ -59,6 +57,8 @@ const chartConfig = {
 export default function ReportsPage() {
   const { date } = useDateRange();
   const { transactions } = useTransactions();
+  const { addNotification } = useNotifications();
+  const { formatCurrency, currency } = useCurrency();
 
   const { from, to } = date || {};
   const fromDate = from ? format(from, "LLL dd, y") : null;
@@ -107,6 +107,7 @@ export default function ReportsPage() {
     const doc = new jsPDF();
     const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`;
 
     doc.setFontSize(20);
     doc.text("Income Statement", 14, 22);
@@ -120,9 +121,9 @@ export default function ReportsPage() {
     autoTable(doc, {
         startY: 50,
         body: [
-            ['Total Income', `$${totalIncome.toFixed(2)}`],
-            ['Total Expenses', `$${totalExpense.toFixed(2)}`],
-            ['Net Savings', `$${netSavings.toFixed(2)}`],
+            ['Total Income', formatCurrency(totalIncome)],
+            ['Total Expenses', formatCurrency(totalExpense)],
+            ['Net Savings', formatCurrency(netSavings)],
         ],
         theme: 'striped',
         styles: { fontSize: 12 },
@@ -135,7 +136,7 @@ export default function ReportsPage() {
     autoTable(doc, {
         startY: tableStartY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, `$${t.amount.toFixed(2)}`]),
+        body: incomeTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [41, 128, 185] },
     });
@@ -146,20 +147,26 @@ export default function ReportsPage() {
      autoTable(doc, {
         startY: secondTableY + 5,
         head: [['Date', 'Description', 'Category', 'Amount']],
-        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, `$${t.amount.toFixed(2)}`]),
+        body: expenseTransactions.map(t => [format(parseISO(t.date), 'yyyy-MM-dd'), t.name, t.category, formatCurrency(t.amount)]),
         theme: 'striped',
         headStyles: { fillColor: [192, 57, 43] },
     });
 
 
-    doc.save(`income-statement-${format(new Date(), 'yyyy-MM-dd')}.pdf`);
+    doc.save(reportName);
+    addNotification({
+      icon: FileText,
+      title: "Report Generated",
+      description: `Successfully downloaded ${reportName}`,
+    })
   };
 
   const generateCSV = () => {
     const incomeTransactions = currentPeriodTransactions.filter(t => t.type === 'income');
     const expenseTransactions = currentPeriodTransactions.filter(t => t.type === 'expense');
+    const reportName = `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`;
 
-    const headers = ['Date', 'Description', 'Category', 'Amount'];
+    const headers = ['Date', 'Description', 'Category', `Amount (${currency})`];
     
     const formatTransactionsToCSV = (transactions: typeof currentPeriodTransactions) => 
       transactions.map(t => 
@@ -177,9 +184,9 @@ export default function ReportsPage() {
       csvContent += `Date Range: ${fromDate} - ${toDate}\n`;
     }
     csvContent += "\nSummary\n";
-    csvContent += `Total Income,$${totalIncome.toFixed(2)}\n`;
-    csvContent += `Total Expenses,$${totalExpense.toFixed(2)}\n`;
-    csvContent += `Net Savings,$${netSavings.toFixed(2)}\n`;
+    csvContent += `Total Income,${totalIncome.toFixed(2)}\n`;
+    csvContent += `Total Expenses,${totalExpense.toFixed(2)}\n`;
+    csvContent += `Net Savings,${netSavings.toFixed(2)}\n`;
     
     csvContent += "\nIncome\n";
     csvContent += headers.join(',') + '\n';
@@ -192,10 +199,16 @@ export default function ReportsPage() {
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `income-statement-${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    link.setAttribute("download", reportName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+
+    addNotification({
+      icon: FileText,
+      title: "Report Generated",
+      description: `Successfully downloaded ${reportName}`,
+    })
   }
 
   return (
@@ -231,10 +244,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium">
                   Total Income
                 </CardTitle>
-                <ArrowUp className="h-4 w-4 text-green-500" />
+                <ArrowDown className="h-4 w-4 text-green-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-500">${totalIncome.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalIncome)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -242,10 +255,10 @@ export default function ReportsPage() {
                 <CardTitle className="text-sm font-medium">
                   Total Expenses
                 </CardTitle>
-                <ArrowDown className="h-4 w-4 text-red-500" />
+                <ArrowUp className="h-4 w-4 text-red-500" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-500">${totalExpense.toFixed(2)}</div>
+                <div className="text-2xl font-bold">{formatCurrency(totalExpense)}</div>
               </CardContent>
             </Card>
             <Card>
@@ -254,7 +267,7 @@ export default function ReportsPage() {
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">${netSavings.toFixed(2)}</div>
+                <div className={cn("text-2xl font-bold", netSavings > 0 ? "text-green-500" : netSavings < 0 ? "text-red-500" : "")}>{formatCurrency(netSavings)}</div>
               </CardContent>
             </Card>
           </div>
@@ -274,7 +287,7 @@ export default function ReportsPage() {
               <BarChart
                 accessibilityLayer
                 data={spendingData}
-                margin={{ top: 20, right: 20, left: -10, bottom: 5 }}
+                margin={{ top: 20, right: 20, left: 20, bottom: 5 }}
               >
                 <CartesianGrid vertical={false} />
                 <XAxis
@@ -284,13 +297,13 @@ export default function ReportsPage() {
                   tickMargin={8}
                 />
                 <YAxis
-                  tickFormatter={(value) => `$${value}`}
+                  tickFormatter={(value) => formatCurrency(value as number, { notation: 'compact' })}
                   tickLine={false}
                   axisLine={false}
                 />
                 <Tooltip
                   cursor={{ fill: "hsl(var(--muted))" }}
-                  content={<ChartTooltipContent />}
+                  content={<ChartTooltipContent formatter={(value) => formatCurrency(value as number)}/>}
                 />
                 <Bar dataKey="amount" fill="var(--color-amount)" radius={4} />
               </BarChart>
@@ -317,19 +330,27 @@ export default function ReportsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {generatedReports.map((report) => (
-                <TableRow key={report.id}>
-                  <TableCell className="font-medium">{report.name}</TableCell>
-                  <TableCell>{report.date}</TableCell>
-                  <TableCell>{report.type}</TableCell>
-                  <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
-                      <Download className="h-4 w-4" />
-                      <span className="sr-only">Download</span>
-                    </Button>
+              {generatedReports.length > 0 ? (
+                generatedReports.map((report) => (
+                  <TableRow key={report.id}>
+                    <TableCell className="font-medium">{report.name}</TableCell>
+                    <TableCell>{report.date}</TableCell>
+                    <TableCell>{report.type}</TableCell>
+                    <TableCell className="text-right">
+                      <Button variant="ghost" size="icon">
+                        <Download className="h-4 w-4" />
+                        <span className="sr-only">Download</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={4} className="h-24 text-center">
+                    No reports generated yet.
                   </TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </CardContent>

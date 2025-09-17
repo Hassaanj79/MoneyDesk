@@ -24,7 +24,7 @@ interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export function DateRangePicker({ className, date, onDateChange }: DateRangePickerProps) {
-  const [preset, setPreset] = React.useState<string>("custom");
+  const [preset, setPreset] = React.useState<string>("last-7-days");
   const [isOpen, setIsOpen] = React.useState(false);
 
   const handlePresetChange = (value: string) => {
@@ -86,23 +86,38 @@ export function DateRangePicker({ className, date, onDateChange }: DateRangePick
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[260px] justify-start text-left font-normal",
+              "w-full justify-start text-left font-normal md:w-[260px]",
               !date && "text-muted-foreground"
             )}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {date?.from ? (
-              date.to ? (
-                <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
-                </>
+            <span className="hidden md:inline">
+                {date?.from ? (
+                date.to ? (
+                    <>
+                    {format(date.from, "LLL dd, yy")} -{" "}
+                    {format(date.to, "LLL dd, yy")}
+                    </>
+                ) : (
+                    format(date.from, "LLL dd, yy")
+                )
+                ) : (
+                <span>Pick a date</span>
+                )}
+            </span>
+             <span className="md:hidden">
+              {date?.from ? (
+                date.to ? (
+                  <>
+                    {format(date.from, "MMM d")} - {format(date.to, "MMM d, yy")}
+                  </>
+                ) : (
+                  format(date.from, "LLL dd, yy")
+                )
               ) : (
-                format(date.from, "LLL dd, y")
-              )
-            ) : (
-              <span>Pick a date</span>
-            )}
+                <span>Pick a date</span>
+              )}
+            </span>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="end">

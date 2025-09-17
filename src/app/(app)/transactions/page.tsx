@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -28,10 +29,10 @@ import { AddTransactionForm } from "@/components/transactions/add-transaction-fo
 import { EditTransactionForm } from "@/components/transactions/edit-transaction-form";
 import { TransactionDetails } from "@/components/transactions/transaction-details";
 import { cn } from "@/lib/utils";
-import { PlusCircle, Trash2, Pencil } from "lucide-react";
+import { PlusCircle, Trash2, Pencil, Repeat } from "lucide-react";
 import type { Transaction } from "@/types";
 import { useDateRange } from "@/contexts/date-range-context";
-import { isWithinInterval, parseISO, format } from "date-fns";
+import { isWithinInterval, parseISO, format, addDays, addWeeks, addMonths, addYears } from "date-fns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTransactions } from "@/contexts/transaction-context";
@@ -45,9 +46,55 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useCurrency } from "@/hooks/use-currency";
+import { useCategories } from "@/contexts/category-context";
+
+const getNextRecurrenceDate = (transaction: Transaction): Date | null => {
+    if (!transaction.isRecurring || !transaction.recurrenceFrequency) {
+        return null;
+    }
+
+    const startDate = parseISO(transaction.date);
+    const now = new Date();
+    let nextDate = startDate;
+
+    const incrementDate = (date: Date): Date => {
+        switch (transaction.recurrenceFrequency) {
+            case 'daily':
+                return addDays(date, 1);
+            case 'weekly':
+                return addWeeks(date, 1);
+            case 'monthly':
+                return addMonths(date, 1);
+            case 'yearly':
+                return addYears(date, 1);
+            default:
+                return addDays(date, 1);
+        }
+    };
+    
+    while (nextDate < now) {
+        nextDate = incrementDate(nextDate);
+    }
+    
+    let previousDate = startDate;
+    while(previousDate < now) {
+        const temp = incrementDate(previousDate);
+        if (temp > now) {
+            break;
+        }
+        previousDate = temp;
+    }
+    
+    nextDate = incrementDate(previousDate);
+
+    return nextDate;
+};
+
 
 export default function TransactionsPage() {
   const { transactions, deleteTransaction } = useTransactions();
+  const { categories } = useCategories();
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -59,6 +106,7 @@ export default function TransactionsPage() {
   const [dialogTitle, setDialogTitle] = useState("Add Expense");
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
 
   const handleTriggerClick = (type: "income" | "expense") => {
     setTransactionType(type);
@@ -90,6 +138,10 @@ export default function TransactionsPage() {
     setDeleteDialogOpen(false);
     setSelectedTransaction(null);
   }
+  
+  const getCategoryName = (categoryId: string) => {
+      return categories.find(c => c.id === categoryId)?.name || 'N/A'
+  }
 
   const filteredTransactions = useMemo(() => {
     let filtered = transactions;
@@ -104,18 +156,18 @@ export default function TransactionsPage() {
       filtered = filtered.filter((t) => t.type === filter);
     }
 
-    return filtered;
+    return filtered.sort((a,b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
   }, [transactions, date, filter]);
 
   return (
     <>
-      <TooltipProvider>
-        <Card>
-          <CardHeader className="flex-row items-center">
-            <div>
-              <CardTitle>Transactions</CardTitle>
-            </div>
-            <div className="ml-auto flex gap-2">
+      <Card>
+        <CardHeader className="flex-row items-center">
+          <div>
+            <CardTitle>Transactions</CardTitle>
+          </div>
+          <div className="ml-auto flex gap-2">
+            <TooltipProvider>
               <Tooltip>
                   <TooltipTrigger asChild>
                       <Button
@@ -125,7 +177,7 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Income</span>
+                      <span className="sm:inline hidden md:inline">Income</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -141,71 +193,96 @@ export default function TransactionsPage() {
                       size="sm"
                       >
                       <PlusCircle className="h-4 w-4" />
-                      <span className="sm:inline hidden">Add Expense</span>
+                      <span className="sm:inline hidden md:inline">Expense</span>
                       </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                       <p>Add Expense</p>
                   </TooltipContent>
               </Tooltip>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
-              <TabsList className="mb-4">
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="income">Income</TabsTrigger>
-                <TabsTrigger value="expense">Expense</TabsTrigger>
-              </TabsList>
-              <Table>
+            </TooltipProvider>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <Tabs value={filter} onValueChange={(value) => setFilter(value as any)}>
+            <TabsList className="mb-4 grid w-full grid-cols-3">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="income">Income</TabsTrigger>
+              <TabsTrigger value="expense">Expense</TabsTrigger>
+            </TabsList>
+            <div className="overflow-x-auto">
+                <Table>
                 <TableHeader>
-                  <TableRow>
+                    <TableRow>
                     <TableHead>Transaction</TableHead>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Category</TableHead>
+                    <TableHead className="hidden sm:table-cell">Date</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="hidden md:table-cell">Due Date</TableHead>
                     <TableHead className="text-right">Amount</TableHead>
-                  </TableRow>
+                    </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredTransactions.length > 0 ? (
-                    filteredTransactions.map((transaction) => (
-                      <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
-                        <TableCell className="font-medium">
-                          {transaction.name}
-                        </TableCell>
-                        <TableCell>{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                    {filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction) => {
+                        const nextDueDate = getNextRecurrenceDate(transaction);
+                        return (
+                        <TableRow key={transaction.id} onClick={() => handleRowClick(transaction)} className="cursor-pointer">
                         <TableCell>
-                          <Badge variant="outline">{transaction.category}</Badge>
+                            <div className="font-medium">{transaction.name}</div>
+                            <div className="text-sm text-muted-foreground md:hidden">
+                                {getCategoryName(transaction.categoryId)}
+                            </div>
+                        </TableCell>
+                        <TableCell className="hidden sm:table-cell">{format(parseISO(transaction.date), 'PPP')}</TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            <Badge variant="outline">{getCategoryName(transaction.categoryId)}</Badge>
+                             {transaction.isRecurring && (
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <Badge variant="outline" className="flex items-center gap-1 capitalize ml-2">
+                                                <Repeat className="h-3 w-3" />
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>Recurring: {transaction.recurrenceFrequency}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            )}
+                        </TableCell>
+                        <TableCell className="hidden md:table-cell">
+                            {nextDueDate ? format(nextDueDate, 'PPP') : '-'}
                         </TableCell>
                         <TableCell
-                          className={cn(
+                            className={cn(
                             "text-right",
                             transaction.type === "income"
-                              ? "text-green-500"
-                              : "text-red-500"
-                          )}
+                                ? "text-green-500"
+                                : "text-red-500"
+                            )}
                         >
-                          {transaction.type === "expense" ? "-" : "+"}
-                          ${transaction.amount.toFixed(2)}
+                            {transaction.type === "expense" ? "-" : "+"}
+                            {formatCurrency(transaction.amount)}
                         </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
+                        </TableRow>
+                    )})
+                    ) : (
                     <TableRow>
-                      <TableCell
-                        colSpan={4}
+                        <TableCell
+                        colSpan={5}
                         className="h-24 text-center"
-                      >
+                        >
                         No transactions found for the selected filters.
-                      </TableCell>
+                        </TableCell>
                     </TableRow>
-                  )}
+                    )}
                 </TableBody>
-              </Table>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </TooltipProvider>
+                </Table>
+            </div>
+          </Tabs>
+        </CardContent>
+      </Card>
 
       {/* Add Dialog */}
       <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>

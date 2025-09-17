@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useMemo } from "react";
@@ -21,53 +22,30 @@ import { Progress } from "@/components/ui/progress";
 import { PlusCircle, Edit, Trash2, DollarSign } from "lucide-react";
 import type { Category, Budget } from "@/types";
 import { BudgetForm } from "@/components/budgets/budget-form";
-import { transactions as allTransactions } from "@/lib/data";
 import { useDateRange } from "@/contexts/date-range-context";
 import { isWithinInterval, parseISO } from "date-fns";
+import { useCurrency } from "@/hooks/use-currency";
+import { useTransactions } from "@/contexts/transaction-context";
+import { useBudgets } from "@/contexts/budget-context";
+import { useCategories } from "@/contexts/category-context";
 
-const initialBudgets: Omit<Budget, 'spent' | 'categoryName'>[] = [
-  { categoryId: "1", limit: 500 },
-  { categoryId: "7", limit: 400 },
-  { categoryId: "2", limit: 800 },
-  { categoryId: "4", limit: 200 },
-];
-
-const initialCategories: Category[] = [
-    { id: "1", name: "Food", type: "expense" },
-    { id: "2", name: "Shopping", type: "expense" },
-    { id: "3", name: "Transport", type: "expense" },
-    { id: "4", name: "Entertainment", type: "expense" },
-    { id: "5", name: "Salary", type: "income" },
-    { id: "6", name: "Freelance", type: "income" },
-    { id: '7', name: 'Groceries', type: 'expense' },
-    { id: '8', name: 'Utilities', type: 'expense' },
-    { id: '9', name: 'Housing', type: 'expense' },
-    { id: '10', name: 'Health', type: 'expense' },
-    { id: '11', name: 'Investment', type: 'income' },
-    { id: '12', name: 'Gifts', type: 'expense' },
-];
+type BudgetWithDetails = Budget & { spent: number, categoryName: string };
 
 export default function BudgetsPage() {
-  const [budgets, setBudgets] = useState(initialBudgets);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const { budgets, deleteBudget } = useBudgets();
+  const { categories, addCategory } = useCategories();
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
+  const [editingBudget, setEditingBudget] = useState<BudgetWithDetails | null>(null);
   const { date } = useDateRange();
+  const { formatCurrency } = useCurrency();
+  const { transactions } = useTransactions();
+  
 
-  const transactions = useMemo(() => {
-    if (date?.from && date?.to) {
-      return allTransactions.filter((t) =>
-        isWithinInterval(parseISO(t.date), { start: date.from!, end: date.to! })
-      );
-    }
-    return allTransactions;
-  }, [date]);
-
-  const processedBudgets: Budget[] = useMemo(() => {
-    return budgets.map(budget => {
+  const processedBudgets: BudgetWithDetails[] = useMemo(() => {
+    return budgets.map((budget) => {
       const category = categories.find(c => c.id === budget.categoryId);
       const spent = transactions
-        .filter(t => t.category === category?.name && t.type === 'expense')
+        .filter(t => t.categoryId === budget.categoryId && t.type === 'expense' && date?.from && date?.to && isWithinInterval(parseISO(t.date), {start: date.from, end: date.to}))
         .reduce((sum, t) => sum + t.amount, 0);
       return {
         ...budget,
@@ -75,7 +53,7 @@ export default function BudgetsPage() {
         spent: spent,
       };
     });
-  }, [budgets, categories, transactions]);
+  }, [budgets, categories, transactions, date]);
 
 
   const handleAddBudget = () => {
@@ -83,34 +61,30 @@ export default function BudgetsPage() {
     setDialogOpen(true);
   };
 
-  const handleEditBudget = (budget: Budget) => {
+  const handleEditBudget = (budget: BudgetWithDetails) => {
     setEditingBudget(budget);
     setDialogOpen(true);
   };
 
-  const handleDeleteBudget = (categoryId: string) => {
-    setBudgets(budgets.filter(b => b.categoryId !== categoryId));
+  const handleDeleteBudget = async (id: string) => {
+    await deleteBudget(id);
   };
 
-  const handleSaveBudget = (data: { categoryId: string; limit: number }) => {
-    if (editingBudget) {
-      setBudgets(budgets.map(b => b.categoryId === editingBudget.categoryId ? { ...b, limit: data.limit } : b));
-    } else {
-      if (!budgets.some(b => b.categoryId === data.categoryId)) {
-        setBudgets([...budgets, data]);
-      }
-    }
+  const handleSaveSuccess = () => {
     setDialogOpen(false);
     setEditingBudget(null);
   };
 
-  const handleCategoryCreated = (name: string) => {
+  const handleCategoryCreated = async (name: string) => {
+      const newCategoryId = await addCategory({ name, type: 'expense' });
+      if (!newCategoryId) throw new Error("Failed to create category");
+      
       const newCategory: Category = {
-          id: (categories.length + 1).toString(),
+          id: newCategoryId,
           name,
-          type: 'expense'
+          type: 'expense',
+          userId: '' // This will be set by the context
       };
-      setCategories(prev => [...prev, newCategory]);
       return newCategory;
   }
 
@@ -142,7 +116,7 @@ export default function BudgetsPage() {
               {processedBudgets.map((budget) => {
                 const percentage = (budget.spent / budget.limit) * 100;
                 return (
-                  <Card key={budget.categoryId} className="flex flex-col">
+                  <Card key={budget.id} className="flex flex-col">
                     <CardHeader>
                       <CardTitle className="flex items-center justify-between">
                         {budget.categoryName}
@@ -150,7 +124,7 @@ export default function BudgetsPage() {
                            <Button variant="ghost" size="icon" onClick={() => handleEditBudget(budget)}>
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(budget.categoryId)}>
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteBudget(budget.id)}>
                             <Trash2 className="h-4 w-4 text-destructive" />
                           </Button>
                         </div>
@@ -163,14 +137,14 @@ export default function BudgetsPage() {
                           <span>Budget</span>
                         </div>
                         <div className="flex justify-between items-baseline">
-                          <span className="text-2xl font-bold">${budget.spent.toFixed(2)}</span>
-                          <span className="text-lg font-medium text-muted-foreground">/ ${budget.limit.toFixed(2)}</span>
+                          <span className="text-2xl font-bold">{formatCurrency(budget.spent)}</span>
+                          <span className="text-lg font-medium text-muted-foreground">/ {formatCurrency(budget.limit)}</span>
                         </div>
                         <Progress value={percentage} />
                         <div className="text-sm text-muted-foreground">
                           {percentage > 100 
-                            ? <p className="text-destructive font-medium">You've overspent by ${ (budget.spent - budget.limit).toFixed(2) }</p>
-                            : <p>${ (budget.limit - budget.spent).toFixed(2) } remaining</p>
+                            ? <p className="text-destructive font-medium">You've overspent by {formatCurrency(budget.spent - budget.limit)}</p>
+                            : <p>{formatCurrency(budget.limit - budget.spent)} remaining</p>
                           }
                         </div>
                       </div>
@@ -193,10 +167,9 @@ export default function BudgetsPage() {
           <DialogTitle>{editingBudget ? "Edit" : "Add"} Budget</DialogTitle>
         </DialogHeader>
         <BudgetForm
-          onSubmit={handleSaveBudget}
+          onSuccess={handleSaveSuccess}
           existingBudget={editingBudget}
           allBudgets={processedBudgets}
-          categories={categories.filter(c => c.type === 'expense')}
           onCategoryCreated={handleCategoryCreated}
         />
       </DialogContent>
